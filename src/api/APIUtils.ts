@@ -10,6 +10,7 @@ declare module 'axios' {
         skipErrorHandler?: boolean;
         /** 是否跳过 401 自动跳转 */
         skipAuthRedirect?: boolean;
+        _retryCount?: number;
     }
 }
 

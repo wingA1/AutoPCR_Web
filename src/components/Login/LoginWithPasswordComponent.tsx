@@ -69,10 +69,10 @@ export default function LoginWithPasswordComponent() {
         <Box w="full">
             <form onSubmit={handleSubmit(handleLogin)}>
                 <Stack gap={4}>
-                    <Field invalid={!!errors.qq} label="QQ" errorText={errors.qq?.message}>
+                    <Field invalid={!!errors.qq} label="账号" errorText={errors.qq?.message}>
                         <Input type="text"
                             {...register('qq')}
-                            placeholder='5位以上'
+                            placeholder='请输入账号ID（数字）'
                             defaultValue={localStorage.getItem('qq') as (string | undefined)}
                         />
                     </Field>
