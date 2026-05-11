@@ -44,19 +44,7 @@ export function LoginComponent() {
             overflow="hidden"
             p={{ base: 0, md: 4 }}
         >
-            {/* Ambient Background Blobs */}
-            <Box
-                position="absolute"
-                top="-10%"
-                left="-10%"
-                w="500px"
-                h="500px"
-                bg="blue.500"
-                filter="blur(120px)"
-                opacity="0.2"
-                rounded="full"
-                animation={`${pulse} 15s infinite ease-in-out`}
-            />
+            {/* Simplified background */}
             <Box
                 position="absolute"
                 bottom="-10%"
@@ -92,8 +80,8 @@ export function LoginComponent() {
                 h={{ base: "full", md: "auto" }}
                 maxH={{ md: "80vh" }}
                 bg="bg.panel"
-                rounded={{ base: "none", md: "3xl" }}
-                shadow={{ base: "none", md: "xl" }}
+                rounded={{ base: "none", md: "xl" }}
+                shadow={{ base: "none", md: "md" }}
                 overflow="hidden"
                 flexDir={{ base: "column", md: "row" }}
                 zIndex={1}
@@ -117,12 +105,11 @@ export function LoginComponent() {
                     {/* Subtle aesthetic circle to reduce emptiness */}
                     <Box
                         position="absolute"
-                        w="80%"
-                        h="80%"
+                        w="60%"
+                        h="60%"
                         rounded="full"
-                        bgGradient="radial(circle, bg.canvas, transparent)"
-                        opacity="0.6"
-                        filter="blur(40px)"
+                        bg="bg.subtle"
+                        opacity="0.4"
                     />
                     
                     <Image 

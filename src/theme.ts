@@ -41,7 +41,7 @@ const config = defineConfig({
           // Panel backgrounds (Sidebar, Cards, Navbar)
           panel: { value: { base: "#FFFFFF", _dark: "#151B2B" } }, 
           // Page background
-          canvas: { value: { base: "#E2E8F0", _dark: "#0B0E14" } },
+          canvas: { value: { base: "#EDF2F7", _dark: "#0D1117" } },
           // Muted backgrounds (Secondary areas)
           muted: { value: { base: "#EDF2F7", _dark: "#1A202C" } },
           // Glass effect for headers/overlays
