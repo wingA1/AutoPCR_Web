@@ -34,8 +34,8 @@ export function DailyResult({ url }: { url: string }) {
 
 function DailyResultTable({ resultData }: DailyResultProps) {
     return (
-        <Table.ScrollArea rounded={'lg'} bg="bg.panel" boxShadow={'lg'}>
-            <Table.Root size='sm' striped colorPalette='teal'>
+        <Table.ScrollArea rounded={'md'} bg="bg.panel" boxShadow={'xs'}>
+            <Table.Root size='sm' striped colorPalette='gray'>
                 <Table.Header>
                     <Table.Row>
                         <Table.ColumnHeader>序号</Table.ColumnHeader>

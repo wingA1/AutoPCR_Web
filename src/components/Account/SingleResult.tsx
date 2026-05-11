@@ -31,7 +31,7 @@ function SingleResultTable({ resultData }: SingleResultProps) {
     const haveTable = resultData?.table?.data?.length ?? 0 > 0 ? true : false;
     return (
         <>
-            <Table.ScrollArea rounded={'lg'} bg="bg.panel" boxShadow={'lg'} mb={haveTable ? 4 : 0}>
+            <Table.ScrollArea rounded={'md'} bg="bg.panel" boxShadow={'xs'} mb={haveTable ? 4 : 0}>
                 <Table.Root size="sm" striped colorPalette="teal" width="100%">
                     <Table.Header>
                         <Table.Row>
