@@ -51,6 +51,10 @@ const config = defineConfig({
     },
   },
   globalCss: {
+    a: {
+      color: 'brand.500',
+      _hover: { textDecoration: 'underline' },
+    },
     body: {
       bg: "bg.canvas",
       color: {
