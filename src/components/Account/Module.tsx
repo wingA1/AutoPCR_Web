@@ -67,8 +67,8 @@ export default function Module({ alias, config, info, isOpen, onOpen, onClose, .
         <Card.Root 
             colorPalette="brand" 
             bg="bg.panel" 
-            borderRadius="lg" 
-            shadow="xs" 
+            borderRadius="lg"
+            shadow="xs"
             borderWidth="1px"
             borderColor="border.subtle"
             transition="all 0.2s"
