@@ -1,6 +1,7 @@
 import { ModuleResult as ModuleResultInterface, ModuleResultResponse } from '@/interfaces/ModuleResult'
 import {
     Table,
+    Tag,
     TableRowProps,
 } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
@@ -65,7 +66,7 @@ function ModuleResult({ resultData, index, ...rest }: ModuleResultProps) {
             <Table.Cell> {resultData.name} </Table.Cell>
             <Table.Cell style={{ whiteSpace: 'pre-wrap' }}>{resultData.config}</Table.Cell>
             <Table.Cell>
-                        <Tag.Root size="sm" colorPalette={resultData.status === 'success' ? 'green' : resultData.status === 'failed' ? 'red' : 'yellow'}>
+                        <Tag.Root size="sm" colorPalette={String(resultData.status) === 'success' ? 'green' : String(resultData.status) === 'failed' ? 'red' : 'yellow'}>
                             <Tag.Label>{resultData.status}</Tag.Label>
                         </Tag.Root>
                     </Table.Cell>

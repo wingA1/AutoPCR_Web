@@ -1,4 +1,4 @@
-import { Box, Flex, IconButton, Popover, Stack, useDisclosure } from '@chakra-ui/react';
+import { Box, Flex, IconButton, Popover, Stack, Text, useDisclosure } from '@chakra-ui/react';
 import { useEffect, useState } from 'react'
 
 import { FiCompass } from 'react-icons/fi';
