@@ -64,7 +64,11 @@ function ModuleResult({ resultData, index, ...rest }: ModuleResultProps) {
             <Table.Cell> {index} </Table.Cell>
             <Table.Cell> {resultData.name} </Table.Cell>
             <Table.Cell style={{ whiteSpace: 'pre-wrap' }}>{resultData.config}</Table.Cell>
-            <Table.Cell> {resultData.status} </Table.Cell>
+            <Table.Cell>
+                        <Tag.Root size="sm" colorPalette={resultData.status === 'success' ? 'green' : resultData.status === 'failed' ? 'red' : 'yellow'}>
+                            <Tag.Label>{resultData.status}</Tag.Label>
+                        </Tag.Root>
+                    </Table.Cell>
             <Table.Cell style={{ whiteSpace: 'pre-wrap' }}>{resultData.log}</Table.Cell>
         </Table.Row>
     )
