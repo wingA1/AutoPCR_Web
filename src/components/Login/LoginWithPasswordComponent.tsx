@@ -79,7 +79,7 @@ export default function LoginWithPasswordComponent() {
                     <Field invalid={!!errors.password} label="密码" errorText={errors.password?.message}>
                         <Input type="password"
                             {...register('password')}
-                            placeholder='8位以上,非QQ密码'
+                            placeholder='请输入密码（至少8位）'
                             defaultValue={localStorage.getItem('password') as (string | undefined)}
                         />
                     </Field>
@@ -107,9 +107,11 @@ export default function LoginWithPasswordComponent() {
                         </Button>
                         <Button
                             colorPalette="brand"
+                            variant="outline"
+                            loading={isSubmitting}
                             onClick={handleSubmit(handleRegister)}
                         >
-                            注册
+                            注册新账号
                         </Button>
                     </Stack>
                 </Stack>
@@ -121,7 +123,7 @@ export default function LoginWithPasswordComponent() {
                     <ModalHeader>忘记密码</ModalHeader>
                     <ModalCloseButton />
                     <ModalBody>
-                        <Text>如需重置密码，请联系系统维护人员。</Text>
+                        <Text>如需重置密码，请联系管理员。</Text>
                     </ModalBody>
                     <ModalFooter>
                         <Button onClick={() => setIsForgotOpen(false)}>我知道了</Button>

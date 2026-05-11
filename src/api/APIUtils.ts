@@ -44,7 +44,7 @@ const getErrorMessage = (error: AxiosError): string => {
         if (typeof data === 'string') return data;
         return data?.message || data?.error || `请求失败 (${error.response.status})`;
     } else if (error.request) {
-        return '服务器无响应，请检测您的网络连接';
+        return '服务器无响应，请检查网络连接';
     } else {
         return error.message || '未知错误';
     }
@@ -53,8 +53,46 @@ const getErrorMessage = (error: AxiosError): string => {
 /**
  * 全局响应拦截器
  */
+const MAX_429_RETRY = 2;
+const RETRY_DELAY_MS = 1500;
+
+const getRetryAfter = (error: AxiosError): number => {
+    const retryAfter = error.response?.headers?.["retry-after"];
+    if (retryAfter) {
+        const seconds = parseInt(retryAfter, 10);
+        if (!isNaN(seconds) && seconds > 0) return seconds * 1000;
+    }
+    return RETRY_DELAY_MS;
+};
+
 const errorHandler = (error: AxiosError) => {
-    // 如果配置了 skipErrorHandler，则不进行全局 toast 提示
+    const status = error.response?.status;
+    if (status === 429) {
+        const retryCount = error.config?._retryCount ?? 0;
+        const delay = getRetryAfter(error);
+        if (retryCount < MAX_429_RETRY) {
+            error.config!._retryCount = retryCount + 1;
+            toaster.create({
+                title: "操作过于频繁",
+                description: "系统繁忙" + Math.ceil(delay / 1000) + "秒后自动重试 (" + (retryCount + 1) + "/" + MAX_429_RETRY + ")",
+                type: "warning",
+                duration: 2000,
+            });
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve(API.request(error.config!));
+                }, delay * (retryCount + 1));
+            });
+        }
+        toaster.create({
+            title: "操作过于频繁",
+            description: "请求过于频繁，请稍后再试",
+            type: "error",
+            duration: 4000,
+        });
+        return Promise.reject(error);
+    }
+
     if (!error.config?.skipErrorHandler) {
         const message = getErrorMessage(error);
         toaster.create({
@@ -65,19 +103,14 @@ const errorHandler = (error: AxiosError) => {
         });
     }
 
-    // 处理 401 未授权情况
-    if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
-        // 使用 window.location.href 确保完全重定向，防止状态残留
-        // 也可以使用 history.push 如果在 Router 上下文中，但在这里有点困难
+    if (status === 401 && !error.config?.skipAuthRedirect) {
         if (window.location.pathname !== LoginRoute.to) {
              window.location.href = LoginRoute.to;
         }
     }
 
     return Promise.reject(error);
-};
-
-API.interceptors.response.use((response) => response, errorHandler);
+};API.interceptors.response.use((response) => response, errorHandler);
 Fetch.interceptors.response.use((response) => response, errorHandler);
 
 
