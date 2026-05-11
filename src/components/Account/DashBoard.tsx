@@ -573,7 +573,7 @@ export function DashBoard() {
                             )}
                         </SimpleGrid>
                     </Stack>
-                </RadioGroup></>)}
+                </RadioGroup>
             )}
         </Stack>
     );
