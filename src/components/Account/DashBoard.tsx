@@ -54,6 +54,7 @@ export function DashBoard() {
         return savedView ? savedView === 'table' : false;
     });
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+    const [searchQuery, setSearchQuery] = useState<string>('');
     
     // Status colors can remain as functional colors
 
@@ -163,7 +164,7 @@ export function DashBoard() {
         if (selectedAccounts.length === userInfo?.accounts?.length) {
             setSelectedAccounts([]);
         } else {
-            setSelectedAccounts(userInfo?.accounts?.map((acc) => acc.name) ?? []);
+            setSelectedAccounts((userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase())).map((acc) => acc.name) ?? []);
         }
     };
 
@@ -248,6 +249,15 @@ export function DashBoard() {
 
     return (
         <Stack gap={4} h="full" w="full" p={4} position="relative" zIndex={1}>
+            <Input
+                placeholder="搜索账号名称..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                size="sm"
+                borderRadius="full"
+                bg="bg.panel"
+                maxW="400px"
+            />
             {/* Dashboard Header - Minimalist */}
             <Card.Root variant="elevated" bg="bg.glass" backdropFilter="blur(12px)" shadow="sm" borderRadius="2xl" borderWidth="1px" borderColor="border.subtle">
                 <Card.Body py={2} px={4}>
@@ -508,7 +518,7 @@ export function DashBoard() {
                                     </Table.Row>
                                 ))
                             ) : (
-                                userInfo?.accounts?.map((account) => (
+                                (userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase())).map((account) => (
                                     <AccountInfo
                                         key={account.name}
                                         account={account}
@@ -542,7 +552,7 @@ export function DashBoard() {
                                     </Card.Root>
                                 ))
                             ) : (
-                                userInfo?.accounts?.map((account) => {
+                                (userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase())).map((account) => {
                                     return (
                                         <AccountInfo
                                             key={account.name}
@@ -563,7 +573,7 @@ export function DashBoard() {
                             )}
                         </SimpleGrid>
                     </Stack>
-                </RadioGroup>
+                </RadioGroup></>)}
             )}
         </Stack>
     );
