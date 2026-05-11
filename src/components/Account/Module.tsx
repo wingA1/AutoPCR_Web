@@ -118,7 +118,7 @@ export default function Module({ alias, config, info, isOpen, onOpen, onClose, .
                                 {info?.description}
                             </Box>
                         }
-                        {info?.description && info?.config_order.length != 0 && <Separator borderColor="border.subtle" />}
+                        {info?.description && info?.config_order.length != 0 && <Separator borderColor="border.subtle" my={2} />}
                         {info?.config_order.length != 0 &&
                             <Box>
                                 <Stack gap='4'>

@@ -47,6 +47,11 @@ export default function Area({ alias, keys: key }: AreaProps) {
     return (
         <Box animation={`${fade} 0.5s ease-out`} pb={20}>
             <Stack gap={4}>
+                    <Flex justify="space-between" align="center" px={1}>
+                        <Text fontSize="sm" color="fg.muted">
+                            共 {config?.order?.length ?? 0} 个模块
+                        </Text>
+                    </Flex>
                 {!config ? (
                     Array.from({ length: 4 }).map((_, i) => (
                         <Box key={i} p={6} borderWidth="1px" borderRadius="2xl" bg="bg.panel" shadow="sm">
