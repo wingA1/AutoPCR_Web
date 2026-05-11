@@ -67,12 +67,12 @@ export default function Module({ alias, config, info, isOpen, onOpen, onClose, .
         <Card.Root 
             colorPalette="brand" 
             bg="bg.panel" 
-            borderRadius="2xl" 
-            shadow="sm" 
+            borderRadius="lg" 
+            shadow="xs" 
             borderWidth="1px"
             borderColor="border.subtle"
             transition="all 0.2s"
-            _hover={{ shadow: 'md', borderColor: "blue.400" }}
+            _hover={{ borderColor: "blue.300" }}
             {...rest} 
         >
             <Card.Header py={3} cursor="pointer" onClick={onToggleExpand}>

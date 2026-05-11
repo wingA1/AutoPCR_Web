@@ -119,7 +119,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
             p={{ base: 6, md: 8 }}
             my={4}
             animation={`${fadeEntry} 0.4s ease-out`}
-            boxShadow="sm"
+            boxShadow="xs"
         >
              <Flex justify="space-between" align="center" mb={2}>
                 <Heading size="lg" fontWeight="bold" letterSpacing="tight">
