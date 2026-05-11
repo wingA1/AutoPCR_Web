@@ -482,8 +482,8 @@ export function DashBoard() {
             
             {isTableView ? (
                 <Box flex={1} overflow={'auto'} borderRadius="xl">
-                    <Table.Root variant="outline" colorPalette="blue" size="sm" bg="bg.panel" borderRadius="xl" boxShadow="sm" ml="0" mr="auto">
-                        <Table.Header position="sticky" top={0} bg="bg.subtle" zIndex={1} boxShadow="sm">
+                    <Table.Root variant="line" size="sm" bg="bg.panel" borderRadius="xl" boxShadow="sm" ml="0" mr="auto">
+                        <Table.Header position="sticky" top={0} bg="bg.panel" zIndex={1} boxShadow="xs">
                             <Table.Row>
                                 <Table.ColumnHeader px={3} fontSize="sm" py={2} fontWeight="bold" width="5%">
                                     <Checkbox
@@ -732,7 +732,7 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
             transition="all 0.2s"
             _hover={{ shadow: 'md', borderColor: "blue.400" }}
         >
-            <Card.Header pb={2}>
+            <Card.Header pb={1} pt={2}>
                 <Flex justify="space-between" align="start">
                     <Stack gap={1}>
                         <HStack>
@@ -759,7 +759,7 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                 </Flex>
             </Card.Header>
 
-            <Card.Body py={2}>
+            <Card.Body py={1}>
                 <Stack gap={3} mt={2}>
                     <Box bg="bg.subtle" p={2} borderRadius="lg">
                          <Flex justify="space-between" align="center" mb={1}>
@@ -779,7 +779,7 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                 </Stack>
             </Card.Body>
 
-            <Card.Footer pt={2}>
+            <Card.Footer pt={1} pb={2}>
                  <HStack gap={0} w="full" justify="space-between">
                      <Tooltip content="详细配置">
                         <IconButton aria-label="Settings" flex="1" variant="ghost" colorPalette="blue" as={Link} // @ts-ignore
