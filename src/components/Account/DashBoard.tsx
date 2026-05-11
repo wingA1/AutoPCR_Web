@@ -259,7 +259,7 @@ export function DashBoard() {
                 maxW="400px"
             />
             {/* Dashboard Header - Minimalist */}
-            <Card.Root variant="elevated" bg="bg.glass" backdropFilter="blur(12px)" shadow="sm" borderRadius="2xl" borderWidth="1px" borderColor="border.subtle">
+            <Card.Root variant="elevated" bg="bg.panel" shadow="xs" borderRadius="lg" borderWidth="1px" borderColor="border.subtle">
                 <Card.Body py={2} px={4}>
                     <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
                         <Box>
@@ -290,9 +290,9 @@ export function DashBoard() {
             {/* Action Toolbar */}
             <Flex 
                 bg="bg.panel" 
-                p={2} 
-                borderRadius="xl" 
-                shadow="sm" 
+                p={1} 
+                borderRadius="lg" 
+                shadow="xs" 
                 borderWidth="1px" 
                 borderColor="border.subtle"
                 align="center"
@@ -455,9 +455,9 @@ export function DashBoard() {
             {creatAccountSwitch.open && (
                 <Flex 
                     bg="bg.panel" 
-                    p={4} 
-                    borderRadius="xl" 
-                    shadow="sm" 
+                    p={3} 
+                    borderRadius="lg" 
+                    shadow="xs" 
                     borderWidth="1px" 
                     borderColor="green.subtle" 
                     align="center" 
@@ -485,7 +485,7 @@ export function DashBoard() {
                     <Table.Root variant="outline" colorPalette="blue" size="sm" bg="bg.panel" borderRadius="xl" boxShadow="sm" ml="0" mr="auto">
                         <Table.Header position="sticky" top={0} bg="bg.subtle" zIndex={1} boxShadow="sm">
                             <Table.Row>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="5%">
+                                <Table.ColumnHeader px={3} fontSize="sm" py={2} fontWeight="bold" width="5%">
                                     <Checkbox
                                         checked={
                                             (selectedAccounts.length > 0 && selectedAccounts.length < (userInfo?.accounts?.length ?? 0))
@@ -496,13 +496,13 @@ export function DashBoard() {
                                         colorPalette="blue"
                                     />
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={0} fontSize="md" py={4} fontWeight="bold" width="25%" minWidth="80px">
+                                <Table.ColumnHeader px={0} fontSize="sm" py={2} fontWeight="bold" width="25%" minWidth="80px">
                                     账号
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
+                                <Table.ColumnHeader px={3} fontSize="sm" py={2} fontWeight="bold" width="30%">
                                     最近记录
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
+                                <Table.ColumnHeader px={3} fontSize="sm" py={2} fontWeight="bold" width="30%">
                                     操作
                                 </Table.ColumnHeader>
                             </Table.Row>
@@ -545,7 +545,7 @@ export function DashBoard() {
                         <SimpleGrid gap={4} templateColumns="repeat(auto-fill, minmax(280px, 1fr))">
                             {!userInfo ? (
                                 Array.from({ length: 4 }).map((_, i) => (
-                                    <Card.Root key={i} bg="bg.panel" borderRadius="2xl" shadow="sm">
+                                    <Card.Root key={i} bg="bg.panel" borderRadius="xl" shadow="sm">
                                         <Card.Header><Skeleton height="24px" width="50%" /></Card.Header>
                                         <Card.Body><SkeletonText noOfLines={3} gap={4} /></Card.Body>
                                         <Card.Footer><Skeleton height="32px" width="100%" /></Card.Footer>
@@ -676,7 +676,7 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                     transition: 'background-color 0.2s',
                 }}
             >
-                <Table.Cell px={3} py={3} width="50px">
+                <Table.Cell px={2} py={2} width="50px">
                     <Checkbox checked={isSelected} onCheckedChange={onToggleSelect} colorPalette="blue" />
                 </Table.Cell>
                 <Table.Cell px={0} py={3}>
@@ -693,10 +693,10 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                         </Stack>
                     </HStack>
                 </Table.Cell>
-                <Table.Cell px={3} py={3}>
+                <Table.Cell px={2} py={2}>
                     <StatusBadge />
                 </Table.Cell>
-                <Table.Cell px={3} py={3}>
+                <Table.Cell px={2} py={2}>
                     <HStack gap={1}>
                         <Tooltip content="配置">
                             <IconButton aria-label="Settings" as={Link} // @ts-ignore
@@ -726,11 +726,11 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
             key={alias} 
             bg="bg.panel" 
             shadow="sm" 
-            borderRadius="2xl"
+            borderRadius="xl"
             borderWidth="1px"
             borderColor="border.subtle"
             transition="all 0.2s"
-            _hover={{ shadow: 'lg', transform: 'translateY(-2px)', borderColor: "blue.focusRing" }}
+            _hover={{ shadow: 'md', borderColor: "blue.400" }}
         >
             <Card.Header pb={2}>
                 <Flex justify="space-between" align="start">
