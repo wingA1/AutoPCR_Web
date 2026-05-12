@@ -161,7 +161,8 @@ export function DashBoard() {
     };
 
     const toggleSelectAll = () => {
-        if (selectedAccounts.length === userInfo?.accounts?.length) {
+        const filtered = (userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase()));
+        if (selectedAccounts.length === filtered.length && filtered.length > 0) {
             setSelectedAccounts([]);
         } else {
             setSelectedAccounts((userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase())).map((acc) => acc.name) ?? []);
@@ -259,7 +260,7 @@ export function DashBoard() {
                 maxW="400px"
             />
             {/* Dashboard Header - Minimalist */}
-            <Card.Root variant="elevated" bg="bg.panel" shadow="xs" borderRadius="lg" borderWidth="1px" borderColor="border.subtle">
+            <Card.Root variant="elevated" bg="bg.panel" shadow="sm" borderRadius="lg" borderWidth="1px" borderColor="border.subtle">
                 <Card.Body py={2} px={4}>
                     <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
                         <Box>
@@ -292,7 +293,7 @@ export function DashBoard() {
                 bg="bg.panel" 
                 p={1} 
                 borderRadius="lg" 
-                shadow="xs" 
+                shadow="sm" 
                 borderWidth="1px" 
                 borderColor="border.subtle"
                 align="center"
@@ -457,7 +458,7 @@ export function DashBoard() {
                     bg="bg.panel" 
                     p={3} 
                     borderRadius="lg" 
-                    shadow="xs" 
+                    shadow="sm" 
                     borderWidth="1px" 
                     borderColor="green.subtle" 
                     align="center" 
@@ -485,24 +486,28 @@ export function DashBoard() {
                     <Table.Root variant="line" size="sm" bg="bg.panel" borderRadius="xl" boxShadow="sm" ml="0" mr="auto">
                         <Table.Header position="sticky" top={0} bg="bg.panel" zIndex={1} boxShadow="xs">
                             <Table.Row>
-                                <Table.ColumnHeader px={3} fontSize="sm" py={2} fontWeight="bold" width="5%">
+                                <Table.ColumnHeader px={2} fontSize="xs" py={2} fontWeight="bold" width="5%">
                                     <Checkbox
                                         checked={
-                                            (selectedAccounts.length > 0 && selectedAccounts.length < (userInfo?.accounts?.length ?? 0))
-                                                ? "indeterminate"
-                                                : (selectedAccounts.length > 0 && selectedAccounts.length === userInfo?.accounts?.length)
+                                            (() => { const fc = (userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase())); if (selectedAccounts.length > 0 && selectedAccounts.length < fc.length) return "indeterminate"; return selectedAccounts.length > 0 && selectedAccounts.length === fc.length; })()
                                         }
                                         onCheckedChange={toggleSelectAll}
                                         colorPalette="blue"
                                     />
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={0} fontSize="sm" py={2} fontWeight="bold" width="25%" minWidth="80px">
+                                <Table.ColumnHeader px={2} fontSize="xs" py={2} fontWeight="bold" width="20%" minWidth="80px">
                                     账号
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="sm" py={2} fontWeight="bold" width="30%">
-                                    最近记录
+                                <Table.ColumnHeader px={2} fontSize="xs" py={2} fontWeight="bold" width="15%">
+                                    状态
                                 </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="sm" py={2} fontWeight="bold" width="30%">
+                                <Table.ColumnHeader px={2} fontSize="xs" py={2} fontWeight="bold" width="20%">
+                                    最近运行时间
+                                </Table.ColumnHeader>
+                                <Table.ColumnHeader px={2} fontSize="xs" py={2} fontWeight="bold" width="15%">
+                                    标记
+                                </Table.ColumnHeader>
+                                <Table.ColumnHeader px={2} fontSize="xs" py={2} fontWeight="bold" width="25%">
                                     操作
                                 </Table.ColumnHeader>
                             </Table.Row>
@@ -518,6 +523,14 @@ export function DashBoard() {
                                     </Table.Row>
                                 ))
                             ) : (
+                                (userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                                    <Table.Row>
+                                        <Table.Cell colSpan={6} textAlign="center" py={8}>
+                                            <Text color="fg.muted">未找到匹配的账号</Text>
+                                            <Text color="fg.muted" fontSize="sm" mt={1}>请尝试其他搜索关键词</Text>
+                                        </Table.Cell>
+                                    </Table.Row>
+                                ) : (
                                 (userInfo?.accounts ?? []).filter((acc) => acc.name.toLowerCase().includes(searchQuery.toLowerCase())).map((account) => (
                                     <AccountInfo
                                         key={account.name}
@@ -535,6 +548,7 @@ export function DashBoard() {
                                         }}
                                     />
                                 ))
+                                )
                             )}
                         </Table.Body>
                     </Table.Root>
@@ -679,22 +693,20 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                 <Table.Cell px={2} py={2} width="50px">
                     <Checkbox checked={isSelected} onCheckedChange={onToggleSelect} colorPalette="blue" />
                 </Table.Cell>
-                <Table.Cell px={0} py={3}>
-                     <HStack gap={2}>
-                        <Box w="32px" h="32px" bg="blue.subtle" color="blue.fg" borderRadius="full" display="flex" alignItems="center" justifyContent="center" fontSize="sm">
-                            {alias.charAt(0).toUpperCase()}
-                        </Box>
-                        <Stack gap={0}>
-                            <Text fontWeight="bold" fontSize="sm">{alias}</Text>
-                            <HStack gap={1}>
-                                {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
-                                {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="solid"><Tag.Label>公会战禁用</Tag.Label></Tag.Root>}
-                            </HStack>
-                        </Stack>
-                    </HStack>
+                <Table.Cell px={2} py={2}>
+                    <Text fontWeight="bold" fontSize="sm">{alias}</Text>
                 </Table.Cell>
                 <Table.Cell px={2} py={2}>
                     <StatusBadge />
+                </Table.Cell>
+                <Table.Cell px={2} py={2}>
+                    <Text fontSize="xs" color="fg.muted">{account.daily_clean_time.time}</Text>
+                </Table.Cell>
+                <Table.Cell px={2} py={2}>
+                    <HStack gap={1}>
+                        {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
+                        {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="solid"><Tag.Label>公会战禁用</Tag.Label></Tag.Root>}
+                    </HStack>
                 </Table.Cell>
                 <Table.Cell px={2} py={2}>
                     <HStack gap={1}>

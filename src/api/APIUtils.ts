@@ -65,7 +65,8 @@ const getRetryAfter = (error: AxiosError): number => {
     return RETRY_DELAY_MS;
 };
 
-const errorHandler = (error: AxiosError) => {
+function createErrorHandler(instance: typeof API) {
+return (error: AxiosError) => {
     const status = error.response?.status;
     if (status === 429) {
         const retryCount = error.config?._retryCount ?? 0;
@@ -80,7 +81,7 @@ const errorHandler = (error: AxiosError) => {
             });
             return new Promise((resolve) => {
                 setTimeout(() => {
-                    resolve(API.request(error.config!));
+                    resolve(instance.request(error.config!));
                 }, delay * (retryCount + 1));
             });
         }
@@ -110,7 +111,10 @@ const errorHandler = (error: AxiosError) => {
     }
 
     return Promise.reject(error);
-};API.interceptors.response.use((response) => response, errorHandler);
-Fetch.interceptors.response.use((response) => response, errorHandler);
+};
+}
+
+API.interceptors.response.use((response) => response, createErrorHandler(API));
+Fetch.interceptors.response.use((response) => response, createErrorHandler(Fetch));
 
 

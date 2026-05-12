@@ -66,7 +66,7 @@ function ModuleResult({ resultData, index, ...rest }: ModuleResultProps) {
             <Table.Cell> {resultData.name} </Table.Cell>
             <Table.Cell style={{ whiteSpace: 'pre-wrap' }}>{resultData.config}</Table.Cell>
             <Table.Cell>
-                        <Tag.Root size="sm" colorPalette={String(resultData.status) === 'success' ? 'green' : String(resultData.status) === 'failed' ? 'red' : 'yellow'}>
+                        <Tag.Root size="sm" colorPalette={resultData.status === '成功' ? 'green' : resultData.status === '错误' ? 'red' : resultData.status === '中止' ? 'orange' : 'gray'}>
                             <Tag.Label>{resultData.status}</Tag.Label>
                         </Tag.Root>
                     </Table.Cell>
