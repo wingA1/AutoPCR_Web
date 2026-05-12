@@ -1,28 +1,28 @@
-import { Box, Flex, IconButton, Popover, Stack, Text, useDisclosure } from '@chakra-ui/react';
-import { useEffect, useState } from 'react'
-
-import { FiCompass } from 'react-icons/fi';
-import Module from "./Module"
+import { Box, Button, Flex, HStack, Input, SimpleGrid, Text, useDisclosure } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
 import { ModuleResponse } from '@interfaces/Module';
 import { Skeleton } from '../../components/ui/skeleton';
-import Toc from "./Toc"
-import { getAccountConfig } from '@api/Account'
-import { keyframes } from '@emotion/react'
+import ModuleCard from './ModuleCard';
+import ModuleDetail from './ModuleDetail';
+import { getAccountConfig, putAccountConfig, postAccountAreaSingle, getAccountAreaSingleResultList } from '@api/Account';
+import { AxiosError } from 'axios';
+import NiceModal from '@ebay/nice-modal-react';
+import ResultInfoModal from './ResultInfoModal';
+import { toaster } from '../../components/ui/toaster';
 
 interface AreaProps {
     alias: string,
     keys: string
 }
 
-export interface TocItem {
-    name: string,
-    id: string
-}
+type FilterMode = 'all' | 'enabled' | 'disabled' | 'runnable';
 
 export default function Area({ alias, keys: key }: AreaProps) {
-
     const [config, setConfig] = useState<ModuleResponse | null>(null);
-    const { open, onOpen, onClose } = useDisclosure()
+    const [selectedModule, setSelectedModule] = useState<string | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filter, setFilter] = useState<FilterMode>('all');
+    const { open: isRunning, onOpen: onStartRun, onClose: onEndRun } = useDisclosure();
 
     useEffect(() => {
         if (alias && key) {
@@ -34,69 +34,115 @@ export default function Area({ alias, keys: key }: AreaProps) {
         }
     }, [alias, key]);
 
-    const tocList: TocItem[] = [];
-    config?.order.map((module) => {
-        tocList.push({ name: config.info[module].name, id: module })
-    })
+    const handleToggle = (moduleKey: string, checked: boolean) => {
+        putAccountConfig(alias, moduleKey, checked).then((res) => {
+            toaster.create({ type: 'success', title: '\u4fdd\u5b58\u6210\u529f', description: res });
+            setConfig((prev) => {
+                if (!prev) return prev;
+                return { ...prev, config: { ...prev.config, [moduleKey]: checked } };
+            });
+        }).catch((err: AxiosError) => {
+            toaster.create({ type: 'error', title: '\u4fdd\u5b58\u5931\u8d25', description: err.response?.data as string || '\u7f51\u7edc\u9519\u8bef' });
+        });
+    };
 
-    const fade = keyframes`
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    `
+    const handleExecute = (moduleKey: string, moduleName: string) => {
+        toaster.create({ type: 'info', title: '\u5f00\u59cb\u6267\u884c' + moduleName + '...' });
+        onStartRun();
+        postAccountAreaSingle(alias, moduleKey).then(async (res) => {
+            toaster.create({ type: 'success', title: '\u6267\u884c\u6210\u529f' });
+            onEndRun();
+            await NiceModal.show(ResultInfoModal, { alias, title: moduleName, resultInfo: res });
+        }).catch(async (err: AxiosError) => {
+            toaster.create({ type: 'error', title: '\u6267\u884c\u5931\u8d25', description: await (err.response?.data as Blob).text() || '\u7f51\u7edc\u9519\u8bef' });
+            onEndRun();
+        });
+    };
+
+    const handleResult = (moduleKey: string, moduleName: string) => {
+        toaster.create({ type: 'info', title: '\u6b63\u5728\u83b7\u53d6' + moduleName + '\u7684\u7ed3\u679c' });
+        onStartRun();
+        getAccountAreaSingleResultList(alias, moduleKey).then(async (res) => {
+            onEndRun();
+            await NiceModal.show(ResultInfoModal, { alias, title: moduleName, resultInfo: res });
+        }).catch(async (err: AxiosError) => {
+            onEndRun();
+            toaster.create({ type: 'error', title: '\u83b7\u53d6\u7ed3\u679c\u5931\u8d25', description: await (err.response?.data as Blob).text() || '\u7f51\u7edc\u9519\u8bef' });
+        });
+    };
+
+    if (!config) {
+        return (
+            <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={3}>
+                {Array.from({ length: 6 }).map((_, i) => (
+                    <Box key={i} p={3} borderWidth="1px" borderRadius="lg" bg="bg.panel">
+                        <Skeleton height="20px" width="60%" mb={2} />
+                        <Skeleton height="14px" width="100%" mb={1} />
+                        <Skeleton height="14px" width="80%" />
+                    </Box>
+                ))}
+            </SimpleGrid>
+        );
+    }
+
+    const enabledCount = config.order.filter((k) => !!config.config[k]).length;
+
+    const filtered = config.order.filter((k) => {
+        const info = config.info[k];
+        const q = searchQuery.toLowerCase();
+        const matchesSearch = !q || info.name.toLowerCase().includes(q) || info.description?.toLowerCase().includes(q) || info.tags?.some((t) => t.toLowerCase().includes(q));
+        const matchesFilter = filter === 'all' || (filter === 'enabled' && !!config.config[k]) || (filter === 'disabled' && !config.config[k]) || (filter === 'runnable' && info.runnable);
+        return matchesSearch && matchesFilter;
+    });
+
+    if (selectedModule) {
+        const info = config.info[selectedModule];
+        return (
+            <ModuleDetail
+                alias={alias}
+                info={info}
+                config={config.config}
+                onBack={() => setSelectedModule(null)}
+                onExecute={() => handleExecute(selectedModule, info.name)}
+                onResult={() => handleResult(selectedModule, info.name)}
+                isRunning={isRunning}
+            />
+        );
+    }
 
     return (
-        <Box animation={`${fade} 0.5s ease-out`} pb={20}>
-            <Stack gap={4}>
-                    <Flex justify="space-between" align="center" px={1}>
-                        <Text fontSize="sm" color="fg.muted">
-                            共 {config?.order?.length ?? 0} 个模块
-                        </Text>
-                    </Flex>
-                {!config ? (
-                    Array.from({ length: 4 }).map((_, i) => (
-                        <Box key={i} p={6} borderWidth="1px" borderRadius="2xl" bg="bg.panel" shadow="sm">
-                            <Skeleton height="30px" width="40%" mb={4} />
-                             <Skeleton height="20px" width="100%" mb={2} />
-                             <Skeleton height="20px" width="80%" mb={2} />
-                             <Skeleton height="20px" width="90%" mb={6} />
-                             <Skeleton height="40px" width="100%" />
-                        </Box>
-                    ))
-                ) : (
-                    config?.order.map((module) => (
-                        <Module key={module} id={module} alias={alias} config={config?.config} info={(config.info[module])} isOpen={open} onOpen={onOpen} onClose={onClose} />
-                    ))
-                )}
-            </Stack>
-
-            {/* Floating TOC Button */}
-            <Flex position="fixed"
-                right="6"
-                top="50%"
-                transform="translateY(-50%)"
-                justifyContent="center"
-                alignItems="center"
-                 zIndex={100}
-            >
-                <Popover.Root lazyMount positioning={{ placement: 'left', gutter: 4 }}>
-                    <Popover.Trigger>
-                        <IconButton 
-                            aria-label='TOC'
-                            colorPalette="blue"
-                            size="xl"
-                            rounded="full"
-                            shadow="xl"
-                            transition="all 0.2s"
-                            _hover={{ transform: "scale(1.1)", shadow: "2xl" }}
-                        >
-                            <FiCompass />
-                        </IconButton>
-                    </Popover.Trigger>
-                    <Popover.Content width="auto" minW="200px">
-                        <Toc maxH="60vh" tocList={tocList} />
-                    </Popover.Content>
-                </Popover.Root>
+        <Box pb={8}>
+            <Flex gap={3} mb={4} align="center" wrap="wrap">
+                <Text fontSize="sm" color="fg.muted">\u5171 {config.order.length} \u4e2a\u6a21\u5757\uff0c\u5df2\u542f\u7528 {enabledCount}</Text>
+                <Input placeholder="\u641c\u7d22\u6a21\u5757..." size="sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} maxW="200px" borderRadius="full" />
+                <HStack gap={1}>
+                    {([['all', '\u5168\u90e8'], ['enabled', '\u5df2\u542f\u7528'], ['disabled', '\u672a\u542f\u7528'], ['runnable', '\u53ef\u6267\u884c']] as [FilterMode, string][]).map(([key, label]) => (
+                        <Button key={key} size="xs" variant={filter === key ? 'solid' : 'ghost'} colorPalette={filter === key ? 'blue' : 'gray'} onClick={() => setFilter(key)}>{label}</Button>
+                    ))}
+                </HStack>
             </Flex>
+            {filtered.length === 0 ? (
+                <Box textAlign="center" py={10}>
+                    <Text color="fg.muted">\u672a\u627e\u5230\u5339\u914d\u7684\u6a21\u5757</Text>
+                    <Text color="fg.muted" fontSize="sm" mt={1}>\u8bf7\u5c1d\u8bd5\u5176\u4ed6\u641c\u7d22\u6216\u7b5b\u9009\u6761\u4ef6</Text>
+                </Box>
+            ) : (
+                <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={3}>
+                    {filtered.map((moduleKey) => (
+                        <ModuleCard
+                            key={moduleKey}
+                            alias={alias}
+                            info={config.info[moduleKey]}
+                            configValue={config.config[moduleKey]}
+                            onClick={() => setSelectedModule(moduleKey)}
+                            onToggle={(checked) => handleToggle(moduleKey, checked)}
+                            onExecute={(e) => { e.stopPropagation(); handleExecute(moduleKey, config.info[moduleKey].name); }}
+                            onResult={(e) => { e.stopPropagation(); handleResult(moduleKey, config.info[moduleKey].name); }}
+                            isRunning={isRunning}
+                        />
+                    ))}
+                </SimpleGrid>
+            )}
         </Box>
-    )
+    );
 }

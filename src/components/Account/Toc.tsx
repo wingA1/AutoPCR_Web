@@ -5,7 +5,7 @@ import {
     FlexProps,
 } from '@chakra-ui/react'
 
-import { TocItem } from './Area'
+interface TocItem { name: string; id: string }
 
 interface SidebarProps extends BoxProps {
     tocList: TocItem[]
