@@ -1,5 +1,5 @@
 import { Box, Button, Flex, HStack, Input, SimpleGrid, Text, useDisclosure } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ModuleResponse } from '@interfaces/Module';
 import { Skeleton } from '../../components/ui/skeleton';
 import ModuleCard from './ModuleCard';
@@ -22,17 +22,46 @@ export default function Area({ alias, keys: key }: AreaProps) {
     const [selectedModule, setSelectedModule] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filter, setFilter] = useState<FilterMode>('all');
+    const [returnScrollY, setReturnScrollY] = useState(0);
+    const shouldRestoreScrollRef = useRef(false);
+    const returnModuleKeyRef = useRef<string | null>(null);
     const { open: isRunning, onOpen: onStartRun, onClose: onEndRun } = useDisclosure();
 
     useEffect(() => {
         if (alias && key) {
             getAccountConfig(alias, key).then((res) => {
-                setConfig(res)
+                setConfig(res);
             }).catch((err) => {
                 console.log(err);
-            })
+            });
         }
     }, [alias, key]);
+
+    useEffect(() => {
+        if (!selectedModule && shouldRestoreScrollRef.current) {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    const targetCard = returnModuleKeyRef.current
+                        ? document.querySelector<HTMLElement>(`[data-module-card="${returnModuleKeyRef.current}"]`)
+                        : null;
+
+                    if (targetCard) {
+                        targetCard.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'auto' });
+                    } else {
+                        const scrollContainer = document.querySelector<HTMLElement>('[role="tabpanel"]');
+                        if (scrollContainer) {
+                            scrollContainer.scrollTo({ top: returnScrollY, behavior: 'auto' });
+                        } else {
+                            window.scrollTo({ top: returnScrollY, behavior: 'auto' });
+                        }
+                    }
+
+                    shouldRestoreScrollRef.current = false;
+                    returnModuleKeyRef.current = null;
+                });
+            });
+        }
+    }, [returnScrollY, selectedModule]);
 
     const handleToggle = (moduleKey: string, checked: boolean) => {
         putAccountConfig(alias, moduleKey, checked).then((res) => {
@@ -102,7 +131,10 @@ export default function Area({ alias, keys: key }: AreaProps) {
                 alias={alias}
                 info={info}
                 config={config.config}
-                onBack={() => setSelectedModule(null)}
+                onBack={() => {
+                    shouldRestoreScrollRef.current = true;
+                    setSelectedModule(null);
+                }}
                 onExecute={() => handleExecute(selectedModule, info.name)}
                 onResult={() => handleResult(selectedModule, info.name)}
                 isRunning={isRunning}
@@ -113,18 +145,38 @@ export default function Area({ alias, keys: key }: AreaProps) {
     return (
         <Box pb={8}>
             <Flex gap={3} mb={4} align="center" wrap="wrap">
-                <Text fontSize="sm" color="fg.muted">\u5171 {config.order.length} \u4e2a\u6a21\u5757\uff0c\u5df2\u542f\u7528 {enabledCount}</Text>
-                <Input placeholder="\u641c\u7d22\u6a21\u5757..." size="sm" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} maxW="200px" borderRadius="full" />
+                <Text fontSize="sm" color="fg.muted">{`\u5171 ${config.order.length} \u4e2a\u6a21\u5757\uff0c\u5df2\u542f\u7528 ${enabledCount}`}</Text>
+                <Input
+                    placeholder={'\u641c\u7d22\u6a21\u5757...'}
+                    size="sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    maxW="200px"
+                    borderRadius="full"
+                />
                 <HStack gap={1}>
-                    {([['all', '\u5168\u90e8'], ['enabled', '\u5df2\u542f\u7528'], ['disabled', '\u672a\u542f\u7528'], ['runnable', '\u53ef\u6267\u884c']] as [FilterMode, string][]).map(([key, label]) => (
-                        <Button key={key} size="xs" variant={filter === key ? 'solid' : 'ghost'} colorPalette={filter === key ? 'blue' : 'gray'} onClick={() => setFilter(key)}>{label}</Button>
+                    {([
+                        ['all', '\u5168\u90e8'],
+                        ['enabled', '\u5df2\u542f\u7528'],
+                        ['disabled', '\u672a\u542f\u7528'],
+                        ['runnable', '\u53ef\u6267\u884c'],
+                    ] as [FilterMode, string][]).map(([filterKey, label]) => (
+                        <Button
+                            key={filterKey}
+                            size="xs"
+                            variant={filter === filterKey ? 'solid' : 'ghost'}
+                            colorPalette={filter === filterKey ? 'blue' : 'gray'}
+                            onClick={() => setFilter(filterKey)}
+                        >
+                            {label}
+                        </Button>
                     ))}
                 </HStack>
             </Flex>
             {filtered.length === 0 ? (
                 <Box textAlign="center" py={10}>
-                    <Text color="fg.muted">\u672a\u627e\u5230\u5339\u914d\u7684\u6a21\u5757</Text>
-                    <Text color="fg.muted" fontSize="sm" mt={1}>\u8bf7\u5c1d\u8bd5\u5176\u4ed6\u641c\u7d22\u6216\u7b5b\u9009\u6761\u4ef6</Text>
+                    <Text color="fg.muted">{'\u672a\u627e\u5230\u5339\u914d\u7684\u6a21\u5757'}</Text>
+                    <Text color="fg.muted" fontSize="sm" mt={1}>{'\u8bf7\u5c1d\u8bd5\u5176\u4ed6\u641c\u7d22\u6216\u7b5b\u9009\u6761\u4ef6'}</Text>
                 </Box>
             ) : (
                 <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={3}>
@@ -132,9 +184,15 @@ export default function Area({ alias, keys: key }: AreaProps) {
                         <ModuleCard
                             key={moduleKey}
                             alias={alias}
+                            moduleKey={moduleKey}
                             info={config.info[moduleKey]}
                             configValue={config.config[moduleKey]}
-                            onClick={() => setSelectedModule(moduleKey)}
+                            onClick={() => {
+                                const scrollContainer = document.querySelector<HTMLElement>('[role="tabpanel"][data-state="open"]');
+                                setReturnScrollY(scrollContainer?.scrollTop ?? window.scrollY);
+                                returnModuleKeyRef.current = moduleKey;
+                                setSelectedModule(moduleKey);
+                            }}
                             onToggle={(checked) => handleToggle(moduleKey, checked)}
                             onExecute={(e) => { e.stopPropagation(); handleExecute(moduleKey, config.info[moduleKey].name); }}
                             onResult={(e) => { e.stopPropagation(); handleResult(moduleKey, config.info[moduleKey].name); }}

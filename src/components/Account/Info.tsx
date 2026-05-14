@@ -23,7 +23,7 @@ import { toaster } from '../../components/ui/toaster';
 
 interface InfoProps {
     accountInfo: AccountResponse;
-    onSaveSuccess?: () => void; // 添加回调函数属性
+    onSaveSuccess?: () => void;
 }
 
 const fadeEntry = keyframes`
@@ -37,19 +37,13 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
     const [channel, setChannel] = useState<string>(accountInfo?.channel);
     const [batchAccounts, setBatchAccounts] = useState<(string | number)[]>(accountInfo?.batch_accounts || []);
     const { open: isOpen, onOpen, onClose } = useDisclosure();
-
-    // 全选状态
     const [allChecked, setAllChecked] = useState<boolean>(false);
-    // 未选择的账号列表
     const [unselectedAccounts, setUnselectedAccounts] = useState<(string | number)[]>([]);
 
-    // 初始化未选择的账号列表
     useEffect(() => {
         if (accountInfo?.all_accounts && accountInfo?.batch_accounts) {
             const unselected = accountInfo.all_accounts.filter((account) => !accountInfo.batch_accounts.includes(account));
             setUnselectedAccounts(unselected);
-
-            // 检查是否全选
             setAllChecked(accountInfo.batch_accounts.length === accountInfo.all_accounts.length);
         }
     }, [accountInfo]);
@@ -59,49 +53,42 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
         onOpen();
         putAccount(accountInfo?.alias, username, password, channel, batchAccounts)
             .then((res) => {
-                toaster.create({ title: '保存成功', description: res, type: 'success' });
-                // 调用回调函数通知父组件更新数据
+                toaster.create({ title: '\u4fdd\u5b58\u6210\u529f', description: res, type: 'success' });
                 if (onSaveSuccess) {
                     onSaveSuccess();
                 }
             })
             .catch((err: AxiosError) => {
-                toaster.create({ title: '保存失败', description: (err.response?.data as string) || '网络错误', type: 'error' });
+                toaster.create({ title: '\u4fdd\u5b58\u5931\u8d25', description: (err.response?.data as string) || '\u7f51\u7edc\u9519\u8bef', type: 'error' });
             })
             .finally(() => {
                 onClose();
             });
     };
 
-    const onAllCheckedChange = (details: { checked: boolean | "indeterminate" }) => {
+    const onAllCheckedChange = (details: { checked: boolean | 'indeterminate' }) => {
         const isChecked = !!details.checked;
         setAllChecked(isChecked);
 
         if (isChecked) {
-            // 全选
             setBatchAccounts(accountInfo?.all_accounts ? [...accountInfo.all_accounts] : []);
             setUnselectedAccounts([]);
         } else {
-            // 取消全选
             setBatchAccounts([]);
             setUnselectedAccounts(accountInfo?.all_accounts ? [...accountInfo.all_accounts] : []);
         }
-    }
+    };
 
-    // 处理单个账号选择
     const handleAccountToggle = (account: string | number) => {
         if (batchAccounts.includes(account)) {
-            // 取消选择
             setBatchAccounts(batchAccounts.filter((item) => item !== account));
             setUnselectedAccounts([...unselectedAccounts, account]);
         } else {
-            // 选择
             setBatchAccounts([...batchAccounts, account]);
             setUnselectedAccounts(unselectedAccounts.filter((item) => item !== account));
         }
     };
 
-    // 当选择变化时，更新全选状态
     useEffect(() => {
         if (accountInfo?.all_accounts) {
             setAllChecked(batchAccounts.length === accountInfo.all_accounts.length);
@@ -111,9 +98,9 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
     return (
         <Stack
             gap={6}
-            w={'full'}
+            w="full"
             bg="bg.panel"
-            rounded={'2xl'}
+            rounded="2xl"
             borderWidth="1px"
             borderColor="border.muted"
             p={{ base: 6, md: 8 }}
@@ -121,13 +108,13 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
             animation={`${fadeEntry} 0.4s ease-out`}
             boxShadow="xs"
         >
-             <Flex justify="space-between" align="center" mb={2}>
+            <Flex justify="space-between" align="center" mb={2}>
                 <Heading size="lg" fontWeight="bold" letterSpacing="tight">
-                    {accountInfo?.alias === 'BATCH_RUNNER' ? '批量运行配置' : accountInfo?.alias}
+                    {accountInfo?.alias === 'BATCH_RUNNER' ? '\u6279\u91cf\u8fd0\u884c\u914d\u7f6e' : accountInfo?.alias}
                 </Heading>
                 {accountInfo?.alias !== 'BATCH_RUNNER' && (
                     <Text fontSize="sm" color="fg.muted">
-                        基础信息配置
+                        {'\u57fa\u7840\u4fe1\u606f\u914d\u7f6e'}
                     </Text>
                 )}
             </Flex>
@@ -136,27 +123,27 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                 <Stack gap={6}>
                     {accountInfo?.alias !== 'BATCH_RUNNER' && (
                         <>
-                            <Field label="账号" required>
+                            <Field label="\u8d26\u53f7" required>
                                 <Input
                                     size="lg"
-                                    placeholder="请输入手机号或账号"
+                                    placeholder={'\u8bf7\u8f93\u5165\u624b\u673a\u53f7\u6216\u8d26\u53f7'}
                                     type="text"
                                     variant="subtle"
                                     defaultValue={accountInfo?.username || ''}
                                     onChange={(e) => setUsername(e.target.value)}
                                 />
                             </Field>
-                            <Field label="密码" required>
+                            <Field label="\u5bc6\u7801" required>
                                 <Input
                                     size="lg"
-                                    placeholder="请输入密码"
+                                    placeholder={'\u8bf7\u8f93\u5165\u5bc6\u7801'}
                                     type="password"
                                     variant="subtle"
                                     defaultValue={accountInfo?.password || ''}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </Field>
-                            <Field label="平台" required>
+                            <Field label="\u5e73\u53f0" required>
                                 <NativeSelect.Root size="lg" variant="subtle">
                                     <NativeSelect.Field
                                         defaultValue={accountInfo?.channel}
@@ -170,7 +157,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                     </NativeSelect.Field>
                                 </NativeSelect.Root>
                             </Field>
-                            
+
                             <Button
                                 size="lg"
                                 colorPalette="blue"
@@ -180,20 +167,20 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                 fontWeight="semibold"
                                 mt={2}
                             >
-                                保存配置
+                                {'\u4fdd\u5b58\u914d\u7f6e'}
                             </Button>
                         </>
                     )}
 
                     {accountInfo?.alias === 'BATCH_RUNNER' && (
                         <Stack gap={5}>
-                             <Flex justify="space-between" align="center" bg="bg.subtle" p={3} rounded="xl">
-                                <Checkbox 
-                                    checked={allChecked} 
-                                    onCheckedChange={onAllCheckedChange} 
+                            <Flex justify="space-between" align="center" bg="bg.subtle" p={3} rounded="xl">
+                                <Checkbox
+                                    checked={allChecked}
+                                    onCheckedChange={onAllCheckedChange}
                                     fontWeight="medium"
                                 >
-                                    全选所有账号
+                                    {'\u5168\u9009\u6240\u6709\u8d26\u53f7'}
                                 </Checkbox>
                                 <Button
                                     size="sm"
@@ -203,15 +190,16 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                     rounded="lg"
                                     px={6}
                                 >
-                                    保存
+                                    {'\u4fdd\u5b58'}
                                 </Button>
                             </Flex>
 
                             <SimpleGrid columns={{ base: 1, md: 2 }} gap={4}>
-                                {/* 左侧：未选择的账号 */}
                                 <Card.Root variant="subtle" size="sm">
                                     <Card.Header pb={2}>
-                                        <Text fontWeight="semibold" color="fg.muted">未选择的账号 ({unselectedAccounts.length})</Text>
+                                        <Text fontWeight="semibold" color="fg.muted">
+                                            {`\u672a\u9009\u62e9\u7684\u8d26\u53f7 (${unselectedAccounts.length})`}
+                                        </Text>
                                     </Card.Header>
                                     <Card.Body pt={0} maxH="400px" overflowY="auto">
                                         <VStack align="start" gap={1}>
@@ -229,16 +217,17 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                                 </Checkbox>
                                             ))}
                                             {unselectedAccounts.length === 0 && (
-                                                <Text color="fg.muted" fontSize="sm" py={2}>无</Text>
+                                                <Text color="fg.muted" fontSize="sm" py={2}>{'\u65e0'}</Text>
                                             )}
                                         </VStack>
                                     </Card.Body>
                                 </Card.Root>
 
-                                {/* 右侧：已选择的账号 */}
                                 <Card.Root variant="outline" borderColor="blue.solid/20" size="sm">
                                     <Card.Header pb={2} bg="blue.subtle/20" borderTopRadius="md">
-                                        <Text fontWeight="semibold" color="blue.fg">已选择的账号 ({batchAccounts.length})</Text>
+                                        <Text fontWeight="semibold" color="blue.fg">
+                                            {`\u5df2\u9009\u62e9\u7684\u8d26\u53f7 (${batchAccounts.length})`}
+                                        </Text>
                                     </Card.Header>
                                     <Card.Body pt={2} maxH="400px" overflowY="auto">
                                         <VStack align="start" gap={1}>
@@ -256,8 +245,8 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                                     {account}
                                                 </Checkbox>
                                             ))}
-                                             {batchAccounts.length === 0 && (
-                                                <Text color="fg.muted" fontSize="sm" py={2}>请选择账号</Text>
+                                            {batchAccounts.length === 0 && (
+                                                <Text color="fg.muted" fontSize="sm" py={2}>{'\u8bf7\u9009\u62e9\u8d26\u53f7'}</Text>
                                             )}
                                         </VStack>
                                     </Card.Body>

@@ -1,12 +1,12 @@
-import { Box, Flex, HStack, Tag, Text } from '@chakra-ui/react'
+import { Box, Button, Flex, HStack, Tag, Text, VStack } from '@chakra-ui/react'
 import { Checkbox } from '../../components/ui/checkbox'
-import { FiActivity, FiSettings } from 'react-icons/fi'
-import { IconButton } from '../../components/ui/icon-button'
+import { FiActivity, FiBarChart2, FiSettings } from 'react-icons/fi'
 import { Tooltip } from '../../components/ui/tooltip'
 import { ModuleInfo, ConfigValue } from '@interfaces/Module'
 
 interface ModuleCardProps {
     alias: string
+    moduleKey?: string
     info: ModuleInfo
     configValue: ConfigValue
     onClick: () => void
@@ -16,11 +16,46 @@ interface ModuleCardProps {
     isRunning?: boolean
 }
 
-export default function ModuleCard({ info, configValue, onClick, onToggle, onExecute, onResult, isRunning }: ModuleCardProps) {
+export default function ModuleCard({ moduleKey, info, configValue, onClick, onToggle, onExecute, onResult, isRunning }: ModuleCardProps) {
     const enabled = !!configValue
     const configCount = info.config_order?.length ?? 0
+
+    const ActionButton = ({
+        label,
+        icon,
+        colorPalette,
+        onAction,
+        loading = false,
+    }: {
+        label: string
+        icon: React.ReactNode
+        colorPalette: string
+        onAction: (e: React.MouseEvent) => void
+        loading?: boolean
+    }) => (
+        <Tooltip content={label}>
+            <Button
+                aria-label={label}
+                size="xs"
+                variant="ghost"
+                colorPalette={colorPalette}
+                onClick={onAction}
+                loading={loading}
+                minW="56px"
+                h="46px"
+                px={2}
+            >
+                <VStack gap={0} lineHeight="1">
+                    <Box fontSize="14px">{icon}</Box>
+                    <Text fontSize="10px" fontWeight="medium">{label}</Text>
+                </VStack>
+            </Button>
+        </Tooltip>
+    )
+
     return (
         <Box
+            data-module-card={moduleKey}
             bg="bg.panel"
             borderWidth="1px"
             borderColor={enabled ? 'blue.200' : 'border.subtle'}
@@ -44,15 +79,15 @@ export default function ModuleCard({ info, configValue, onClick, onToggle, onExe
                     </Box>
                 </HStack>
                 <HStack gap={0} flexShrink={0} onClick={(e) => e.stopPropagation()}>
-                    {info.runnable && <Tooltip content="执行"><IconButton aria-label="Execute" size="sm" variant="ghost" colorPalette="orange" onClick={onExecute} loading={isRunning}><FiActivity /></IconButton></Tooltip>}
-                    {info.runnable && <Tooltip content="结果"><IconButton aria-label="Result" size="sm" variant="ghost" colorPalette="green" onClick={onResult}><FiActivity /></IconButton></Tooltip>}
-                    <Tooltip content="配置"><IconButton aria-label="Config" size="sm" variant="ghost" colorPalette="blue" onClick={onClick}><FiSettings /></IconButton></Tooltip>
+                    {info.runnable && <ActionButton label={'\u6267\u884c'} icon={<FiActivity />} colorPalette="orange" onAction={onExecute} loading={isRunning} />}
+                    {info.runnable && <ActionButton label={'\u7ed3\u679c'} icon={<FiBarChart2 />} colorPalette="green" onAction={onResult} />}
+                    <ActionButton label={'\u914d\u7f6e'} icon={<FiSettings />} colorPalette="blue" onAction={(e) => { e.stopPropagation(); onClick(); }} />
                 </HStack>
             </Flex>
             {info.description && <Text fontSize="xs" color="fg.muted" mt={2} lineClamp={2}>{info.description}</Text>}
             <Flex justify="space-between" mt={2}>
-                <Text fontSize="xs" color="fg.muted">{configCount} 项配置</Text>
-                <Tag.Root size="sm" colorPalette={enabled ? 'green' : 'gray'} variant="subtle"><Tag.Label>{enabled ? '已启用' : '未启用'}</Tag.Label></Tag.Root>
+                <Text fontSize="xs" color="fg.muted">{`${configCount} \u9879\u914d\u7f6e`}</Text>
+                <Tag.Root size="sm" colorPalette={enabled ? 'green' : 'gray'} variant="subtle"><Tag.Label>{enabled ? '\u5df2\u542f\u7528' : '\u672a\u542f\u7528'}</Tag.Label></Tag.Root>
             </Flex>
         </Box>
     )

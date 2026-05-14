@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 import { TanStackRouterVite } from '@tanstack/router-vite-plugin'
 import path from 'path'
 import { visualizer } from "rollup-plugin-visualizer";
-import { splitVendorChunkPlugin } from 'vite'
 import obfuscator from 'rollup-plugin-obfuscator';
 import { resolve } from 'path';
 import { readFileSync } from 'fs';
@@ -32,7 +31,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       TanStackRouterVite(),
-      splitVendorChunkPlugin(),
       visualizer({
         open: true,
       }),
@@ -44,7 +42,7 @@ export default defineConfig(({ mode }) => {
         options: {
           compact: true,
           controlFlowFlattening: true,
-          controlFlowFlatteningThreshold: 0.75,
+          controlFlowFlatteningThreshold: 0.15,
           numbersToExpressions: true,
           simplify: true,
           stringArrayShuffle: true,
@@ -61,11 +59,11 @@ export default defineConfig(({ mode }) => {
           identifiersPrefix: "",
           inputFileName: "",
           log: true,
-          renameGlobals: true,
+          renameGlobals: false,
           reservedNames: [],
           reservedStrings: [],
           seed: 0,
-          selfDefending: true,
+          selfDefending: false,
           sourceMap: false,
           sourceMapBaseUrl: "",
           sourceMapFileName: "",
@@ -74,8 +72,8 @@ export default defineConfig(({ mode }) => {
           stringArrayEncoding: ["base64"],
           stringArrayThreshold: 0.75,
           target: "browser",
-          transformObjectKeys: true,
-          unicodeEscapeSequence: true,
+          transformObjectKeys: false,
+          unicodeEscapeSequence: false,
 
           domainLockRedirectUrl: "about:blank",
           forceTransformStrings: [],
@@ -113,7 +111,6 @@ export default defineConfig(({ mode }) => {
                 if (id.includes('@chakra-ui') || id.includes('@emotion') || id.includes('framer-motion')) return 'chakra';
                 if (id.includes('@tanstack') || id.includes('react-location')) return 'tanstack';
                 if (id.includes('axios')) return 'utils';
-                if (id.includes('react') || id.includes('react-dom')) return 'react-vendor';
                 
 				return 'vendor'
 			  }
