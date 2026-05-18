@@ -27,3 +27,7 @@ stats.html
 # Local-only preview asset
 public/
 
+
+# GitHub Actions disabled for now
+.github/workflows/
+
