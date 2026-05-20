@@ -123,7 +123,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                 <Stack gap={6}>
                     {accountInfo?.alias !== 'BATCH_RUNNER' && (
                         <>
-                            <Field label="\u8d26\u53f7" required>
+                            <Field label="账号" required>
                                 <Input
                                     size="lg"
                                     placeholder={'\u8bf7\u8f93\u5165\u624b\u673a\u53f7\u6216\u8d26\u53f7'}
@@ -133,7 +133,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                     onChange={(e) => setUsername(e.target.value)}
                                 />
                             </Field>
-                            <Field label="\u5bc6\u7801" required>
+                            <Field label="密码" required>
                                 <Input
                                     size="lg"
                                     placeholder={'\u8bf7\u8f93\u5165\u5bc6\u7801'}
@@ -143,7 +143,7 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </Field>
-                            <Field label="\u5e73\u53f0" required>
+                            <Field label="平台" required>
                                 <NativeSelect.Root size="lg" variant="subtle">
                                     <NativeSelect.Field
                                         defaultValue={accountInfo?.channel}
