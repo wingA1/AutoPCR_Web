@@ -9,11 +9,10 @@ import {
     SimpleGrid,
     Spacer,
     Stack,
-    Table,
     Tag,
     Text,
 } from '@chakra-ui/react';
-import { FiActivity, FiBook, FiCheck, FiCopy, FiGrid, FiKey, FiLayers, FiList, FiSettings, FiStar, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX } from 'react-icons/fi';
+import { FiActivity, FiBook, FiCheck, FiCopy, FiKey, FiLayers, FiSettings, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX } from 'react-icons/fi';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Radio, RadioGroup } from '../../components/ui/radio';
 import React, { ChangeEvent } from 'react';
@@ -24,7 +23,6 @@ import { useEffect, useState } from 'react';
 
 import Alert from '../alert';
 import { AxiosError } from 'axios';
-import { Checkbox } from '../../components/ui/checkbox';
 import { CloseButton } from '../../components/ui/close-button';
 import { Route as DashBoardRoute } from '@routes/daily/_sidebar/account/index';
 import { IconButton } from '../../components/ui/icon-button';
@@ -42,6 +40,49 @@ import DataCenterView from '../DataCenter/DataCenterView';
 
 const handle: Map<string, (arg0: boolean) => void> = new Map<string, (arg0: boolean) => void>();
 
+function LabeledActionButton({
+    label,
+    icon,
+    colorPalette,
+    onClick,
+    loading = false,
+    variant = 'ghost',
+    as,
+    to,
+}: {
+    label: string
+    icon: React.ReactNode
+    colorPalette: string
+    onClick?: () => void
+    loading?: boolean
+    variant?: 'ghost' | 'outline' | 'solid' | 'surface'
+    as?: any
+    to?: string
+}) {
+    return (
+        <Tooltip content={label}>
+            <Button
+                aria-label={label}
+                h="54px"
+                minW="58px"
+                px={2}
+                size="sm"
+                variant={variant}
+                colorPalette={colorPalette}
+                onClick={onClick}
+                loading={loading}
+                as={as}
+                {...(to ? { to } : {})}
+            >
+                <Stack gap={0} align="center">
+                    <Box fontSize="16px">{icon}</Box>
+                    <Text fontSize="11px" fontWeight="semibold" lineHeight="1.1">{label}</Text>
+                </Stack>
+            </Button>
+        </Tooltip>
+    );
+}
+
 export function DashBoard() {
     const [userInfo, setUserInfo] = useState<UserInfoResponse>();
     const freshAccountInfo = useDisclosure();
@@ -50,10 +91,6 @@ export function DashBoard() {
     const clearAccountConfirm = useDisclosure();
     const [alias, setAlias] = useState<string>('');
     const [count, increaseCount, decreaseCount] = useCountHook();
-    const [isTableView, setIsTableView] = useState<boolean>(() => {
-        const savedView = localStorage.getItem('accountViewMode');
-        return savedView ? savedView === 'table' : false;
-    });
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
 
     // Status colors can remain as functional colors
@@ -136,35 +173,8 @@ export function DashBoard() {
     };
 
     const handleCleanDailyAll = () => {
-        if (isTableView && selectedAccounts.length > 0) {
-            // 清理选中的账号
-            for (const accountName of selectedAccounts) {
-                const fn = handle.get(accountName);
-                if (fn) fn(false);
-            }
-        } else {
-            // 清理所有账号
-            for (const fn of handle.values()) {
-                fn(false);
-            }
-        }
-    };
-
-    const toggleSelectAccount = (accountName: string) => {
-        setSelectedAccounts((prev) => {
-            if (prev.includes(accountName)) {
-                return prev.filter((name) => name !== accountName);
-            } else {
-                return [...prev, accountName];
-            }
-        });
-    };
-
-    const toggleSelectAll = () => {
-        if (selectedAccounts.length === userInfo?.accounts?.length) {
-            setSelectedAccounts([]);
-        } else {
-            setSelectedAccounts(userInfo?.accounts?.map((acc) => acc.name) ?? []);
+        for (const fn of handle.values()) {
+            fn(false);
         }
     };
 
@@ -270,15 +280,9 @@ export function DashBoard() {
                         </Box>
 
                         <HStack gap={2}>
-                            <Button size="xs" variant="surface" colorPalette="teal" onClick={showReadme}>
-                                <FiBook /> 使用须知
-                            </Button>
-                            <Button size="xs" variant="surface" colorPalette="blue" onClick={handleResetPassword}>
-                                <FiKey /> 修改密码
-                            </Button>
-                            <Button size="xs" variant="surface" colorPalette="red" onClick={deleteQQConfirm.onOpen}>
-                                <FiUserX /> 注销QQ
-                            </Button>
+                            <LabeledActionButton label="使用须知" icon={<FiBook />} colorPalette="teal" variant="surface" onClick={showReadme} />
+                            <LabeledActionButton label="修改密码" icon={<FiKey />} colorPalette="blue" variant="surface" onClick={handleResetPassword} />
+                            <LabeledActionButton label="注销QQ" icon={<FiUserX />} colorPalette="red" variant="surface" onClick={deleteQQConfirm.onOpen} />
                         </HStack>
                     </Flex>
                 </Card.Body>
@@ -302,101 +306,26 @@ export function DashBoard() {
             >
                 {/* Left Actions: Batch Operations */}
                 <HStack gap={2}>
-                     <Button
-                        size="sm"
-                        colorPalette="orange"
-                        variant="ghost"
-                        onClick={handleCleanDailyAll}
-                        loading={count != 0}
-                    >
-                        <FiTarget /> {isTableView && selectedAccounts.length > 0 ? `清选择(${selectedAccounts.length})` : '清理全部'}
-                    </Button>
-                    <Button
-                        as={Link}
-                        size="sm"
+                    <LabeledActionButton label="清理全部" icon={<FiTarget />} colorPalette="orange" onClick={handleCleanDailyAll} loading={count != 0} />
+                    <LabeledActionButton
+                        label="批量运行"
+                        icon={<FiLayers />}
                         colorPalette="blue"
-                        variant="ghost"
+                        as={Link}
                         // @ts-ignore
                         to={`${DashBoardRoute.to || ''}BATCH_RUNNER`}
                         loading={count != 0}
-                    >
-                        <FiLayers /> 批量运行
-                    </Button>
+                    />
                 </HStack>
 
                 <Spacer />
 
-                {/* Right Actions: View Switch & Account Manage */}
+                {/* Right Actions: Account Manage */}
                 <HStack gap={2}>
-                    {/* View Switcher */}
-                    <Box bg="bg.subtle" p={1} borderRadius="md" display="flex">
-                        <Tooltip content="表格视图">
-                            <IconButton
-                                aria-label="List view"
-                                size="xs"
-                                variant={isTableView ? "solid" : "ghost"}
-                                colorPalette={isTableView ? "blue" : "gray"}
-                                onClick={() => {
-                                    setIsTableView(true);
-                                    localStorage.setItem('accountViewMode', 'table');
-                                }}
-                            >
-                                <FiList />
-                            </IconButton>
-                        </Tooltip>
-                        <Tooltip content="卡片视图">
-                            <IconButton
-                                aria-label="Grid view"
-                                size="xs"
-                                variant={!isTableView ? "solid" : "ghost"}
-                                colorPalette={!isTableView ? "blue" : "gray"}
-                                onClick={() => {
-                                    setIsTableView(false);
-                                    localStorage.setItem('accountViewMode', 'card');
-                                }}
-                            >
-                                <FiGrid />
-                            </IconButton>
-                        </Tooltip>
-                    </Box>
-
-                    {/* Sync & Default (only for Table && Single Select) */}
-                    {isTableView && selectedAccounts.length === 1 && (
-                        <HStack gap={1} separator={<Box w="1px" h="15px" bg="border.subtle" />}>
-                             <Tooltip content={`将其他账号配置同步为 ${selectedAccounts[0]} 的配置`}>
-                                <IconButton
-                                    aria-label="Sync configuration"
-                                    size="sm"
-                                    variant="ghost"
-                                    colorPalette="teal"
-                                    onClick={() => {
-                                        NiceModal.show(ConfigSyncModal, { sourceAccount: selectedAccounts[0] });
-                                    }}
-                                > <FiCopy /> </IconButton>
-                            </Tooltip>
-                            <Tooltip content={`将 ${selectedAccounts[0]} 设为默认账号`}>
-                                <IconButton
-                                    aria-label="Set as default"
-                                    size="sm"
-                                    variant="ghost"
-                                    colorPalette="purple"
-                                    onClick={() => handleDefaultAccount(selectedAccounts[0])}
-                                > <FiStar /> </IconButton>
-                            </Tooltip>
-                        </HStack>
-                    )}
-
                     {/* Add / Import / Delete Group */}
-                     <HStack gap={1}>
+                    <HStack gap={1}>
                         {userInfo?.clan && (
-                            <Tooltip content="导入账号 (TSV)">
-                                <IconButton
-                                    aria-label="Import accounts"
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => fileInputRef.current?.click()}
-                                > <FiUpload /> </IconButton>
-                            </Tooltip>
+                            <LabeledActionButton label="导入账号" icon={<FiUpload />} colorPalette="teal" variant="outline" onClick={() => fileInputRef.current?.click()} />
                         )}
                         <Input
                             ref={fileInputRef}
@@ -406,49 +335,21 @@ export function DashBoard() {
                             onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
                             display="none"
                         />
-
-
-                         <Tooltip content={isTableView && selectedAccounts.length > 0 ? `删除选中(${selectedAccounts.length})` : '删除全部'}>
-                            <IconButton
-                                aria-label="Delete selected accounts"
-                                size="sm"
-                                variant="outline"
-                                colorPalette="red"
-                                onClick={() => {
-                                    if (isTableView && selectedAccounts.length > 0) {
-                                        if (window.confirm(`确定删除选中的 ${selectedAccounts.length} 个账号吗？`)) {
-                                            Promise.all(selectedAccounts.map((name) => delAccount(name)))
-                                                .then(() => {
-                                                    toaster.create({ type: 'success', title: '删除成功' });
-                                                    setSelectedAccounts([]);
-                                                    freshAccountInfo.onToggle();
-                                                })
-                                                .catch((err) => toaster.create({ type: 'error', title: '删除失败', description: (err?.response?.data as string) || '网络错误' }));
-                                        }
-                                    } else {
-                                        clearAccountConfirm.onOpen();
-                                    }
-                                }}
-                            > <FiUserMinus /> </IconButton>
-                        </Tooltip>
+                        <LabeledActionButton label="删除全部" icon={<FiUserMinus />} colorPalette="red" variant="outline" onClick={clearAccountConfirm.onOpen} />
                         <Box position="relative">
-                            <Tooltip content={creatAccountSwitch.open ? '取消创建' : '创建新账号'}>
-                                <IconButton
-                                    aria-label={creatAccountSwitch.open ? "Confirm creation" : "Create account"}
-                                    size="sm"
-                                    variant={creatAccountSwitch.open ? "solid" : "solid"}
-                                    colorPalette={creatAccountSwitch.open ? "red" : "green"}
-                                    onClick={() => {
-                                        if(creatAccountSwitch.open && !alias) creatAccountSwitch.onToggle(); // Close if empty
-                                        else if (creatAccountSwitch.open && alias) handleCreateAccount(); // Submit
-                                        else creatAccountSwitch.onToggle(); // Open
-                                    }}
-                                >
-                                    {creatAccountSwitch.open ? <FiCheck /> : <FiUserPlus />}
-                                </IconButton>
-                            </Tooltip>
+                            <LabeledActionButton
+                                label={creatAccountSwitch.open ? '确认创建' : '创建账号'}
+                                icon={creatAccountSwitch.open ? <FiCheck /> : <FiUserPlus />}
+                                colorPalette={creatAccountSwitch.open ? 'red' : 'green'}
+                                variant="solid"
+                                onClick={() => {
+                                    if (creatAccountSwitch.open && !alias) creatAccountSwitch.onToggle();
+                                    else if (creatAccountSwitch.open && alias) handleCreateAccount();
+                                    else creatAccountSwitch.onToggle();
+                                }}
+                            />
                         </Box>
-                     </HStack>
+                    </HStack>
                 </HStack>
             </Flex>
 
@@ -481,101 +382,45 @@ export function DashBoard() {
                 {' '}
             </Alert>
 
-            {isTableView ? (
-                <Box flex={1} overflow={'auto'} borderRadius="xl">
-                    <Table.Root variant="outline" colorPalette="blue" size="sm" bg="bg.panel" borderRadius="xl" boxShadow="sm" ml="0" mr="auto">
-                        <Table.Header position="sticky" top={0} bg="bg.subtle" zIndex={1} boxShadow="sm">
-                            <Table.Row>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="5%">
-                                    <Checkbox
-                                        checked={
-                                            (selectedAccounts.length > 0 && selectedAccounts.length < (userInfo?.accounts?.length ?? 0))
-                                                ? "indeterminate"
-                                                : (selectedAccounts.length > 0 && selectedAccounts.length === userInfo?.accounts?.length)
-                                        }
-                                        onCheckedChange={toggleSelectAll}
-                                        colorPalette="blue"
-                                    />
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader px={0} fontSize="md" py={4} fontWeight="bold" width="25%" minWidth="80px">
-                                    账号
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
-                                    最近记录
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader px={3} fontSize="md" py={4} fontWeight="bold" width="30%">
-                                    操作
-                                </Table.ColumnHeader>
-                            </Table.Row>
-                        </Table.Header>
-                        <Table.Body>
-                            {!userInfo ? (
-                                Array.from({ length: 5 }).map((_, i) => (
-                                    <Table.Row key={i} bg="transparent">
-                                        <Table.Cell px={3} py={2}><Skeleton height="20px" width="20px" /></Table.Cell>
-                                        <Table.Cell px={0} py={2}><Skeleton height="20px" width="80%" /></Table.Cell>
-                                        <Table.Cell px={3} py={2}><Skeleton height="20px" width="60%" /></Table.Cell>
-                                        <Table.Cell px={3} py={2}><Skeleton height="32px" width="100%" /></Table.Cell>
-                                    </Table.Row>
-                                ))
-                            ) : (
-                                userInfo?.accounts?.map((account) => (
-                                    <AccountInfo
-                                        key={account.name}
-                                        account={account}
-                                        onToggle={freshAccountInfo.onToggle}
-                                        increaseCount={increaseCount}
-                                        decreaseCount={decreaseCount}
-                                        updateAccountInfo={updateAccountInfo}
-                                        isTableView={isTableView}
-                                        isSelected={selectedAccounts.includes(account.name)}
-                                        onToggleSelect={() => toggleSelectAccount(account.name)}
-                                        defaultAccount={userInfo?.default_account}
-                                        onOpenSyncConfig={(alias) => {
-                                            NiceModal.show(ConfigSyncModal, { sourceAccount: alias });
-                                        }}
-                                    />
-                                ))
-                            )}
-                        </Table.Body>
-                    </Table.Root>
-                </Box>
-            ) : (
-                <RadioGroup onValueChange={(e) => handleDefaultAccount(e.value || "")} value={userInfo?.default_account} flex={1} overflow={'auto'} p={1}>
-                    <Stack>
-                        <SimpleGrid gap={4} templateColumns="repeat(auto-fill, minmax(280px, 1fr))">
-                            {!userInfo ? (
-                                Array.from({ length: 4 }).map((_, i) => (
-                                    <Card.Root key={i} bg="bg.panel" borderRadius="2xl" shadow="sm">
-                                        <Card.Header><Skeleton height="24px" width="50%" /></Card.Header>
-                                        <Card.Body><SkeletonText noOfLines={3} gap={4} /></Card.Body>
-                                        <Card.Footer><Skeleton height="32px" width="100%" /></Card.Footer>
-                                    </Card.Root>
-                                ))
-                            ) : (
-                                userInfo?.accounts?.map((account) => {
-                                    return (
-                                        <AccountInfo
-                                            key={account.name}
-                                            account={account}
-                                            onToggle={freshAccountInfo.onToggle}
-                                            increaseCount={increaseCount}
-                                            decreaseCount={decreaseCount}
-                                            updateAccountInfo={updateAccountInfo}
-                                            isTableView={isTableView}
-                                            isSelected={selectedAccounts.includes(account.name)}
-                                            onToggleSelect={() => toggleSelectAccount(account.name)}
-                                            onOpenSyncConfig={(alias) => {
-                                                NiceModal.show(ConfigSyncModal, { sourceAccount: alias });
-                                            }}
-                                        />
-                                    );
-                                })
-                            )}
-                        </SimpleGrid>
-                    </Stack>
-                </RadioGroup>
-            )}
+            <RadioGroup
+                onValueChange={(e) => {
+                    const value = e.value || '';
+                    handleDefaultAccount(value);
+                    setSelectedAccounts(value ? [value] : []);
+                }}
+                value={userInfo?.default_account}
+                flex={1}
+                overflow={'auto'}
+                p={1}
+            >
+                <Stack>
+                    <SimpleGrid gap={4} templateColumns="repeat(auto-fill, minmax(280px, 1fr))">
+                        {!userInfo ? (
+                            Array.from({ length: 4 }).map((_, i) => (
+                                <Card.Root key={i} bg="bg.panel" borderRadius="2xl" shadow="sm">
+                                    <Card.Header><Skeleton height="24px" width="50%" /></Card.Header>
+                                    <Card.Body><SkeletonText noOfLines={3} gap={4} /></Card.Body>
+                                    <Card.Footer><Skeleton height="32px" width="100%" /></Card.Footer>
+                                </Card.Root>
+                            ))
+                        ) : (
+                            userInfo?.accounts?.map((account) => (
+                                <AccountInfo
+                                    key={account.name}
+                                    account={account}
+                                    onToggle={freshAccountInfo.onToggle}
+                                    increaseCount={increaseCount}
+                                    decreaseCount={decreaseCount}
+                                    updateAccountInfo={updateAccountInfo}
+                                    onOpenSyncConfig={(accountAlias) => {
+                                        NiceModal.show(ConfigSyncModal, { sourceAccount: accountAlias });
+                                    }}
+                                />
+                            ))
+                        )}
+                    </SimpleGrid>
+                </Stack>
+            </RadioGroup>
         </Stack>
 
         <Box
@@ -604,14 +449,10 @@ interface AccountInfoProps {
     increaseCount: () => void;
     decreaseCount: () => void;
     updateAccountInfo: (updatedAccount: AccountInfoInterface) => void;
-    isTableView?: boolean;
-    isSelected?: boolean;
-    onToggleSelect?: () => void;
-    defaultAccount?: string;
     onOpenSyncConfig?: (alias: string) => void;
 }
 
-function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAccountInfo, isTableView = false, isSelected = false, onToggleSelect, defaultAccount, onOpenSyncConfig }: AccountInfoProps) {
+function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAccountInfo, onOpenSyncConfig }: AccountInfoProps) {
     const buttomLoading = useDisclosure();
     const alias = account.name;
     const deleteConfirm = useDisclosure();
@@ -658,86 +499,6 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
     };
 
     const cancelRef = React.useRef<HTMLButtonElement>(null);
-
-    // Status Badge Helper
-    const StatusBadge = () => {
-        let color = "red";
-        let icon = <FiUserX />;
-        let text = "未知";
-
-        if (account.daily_clean_time.status === '成功') {
-            color = "green";
-            icon = <FiCheck />;
-            text = "完成";
-        } else if (account.daily_clean_time.status === '警告') {
-            color = "orange";
-            icon = <FiActivity />;
-            text = "警告";
-        }
-
-        return (
-             <Tag.Root colorPalette={color} variant="subtle">
-                <Tag.StartElement>{icon}</Tag.StartElement>
-                <Tag.Label>{text} {account.daily_clean_time.time}</Tag.Label>
-            </Tag.Root>
-        )
-    }
-
-
-    // 表格视图渲染
-    if (isTableView) {
-        return (
-            <Table.Row
-                key={alias}
-                bg="bg.panel"
-                _hover={{
-                    bg: "bg.muted",
-                    transition: 'background-color 0.2s',
-                }}
-            >
-                <Table.Cell px={3} py={3} width="50px">
-                    <Checkbox checked={isSelected} onCheckedChange={onToggleSelect} colorPalette="blue" />
-                </Table.Cell>
-                <Table.Cell px={0} py={3}>
-                     <HStack gap={2}>
-                        <Box w="32px" h="32px" bg="blue.subtle" color="blue.fg" borderRadius="full" display="flex" alignItems="center" justifyContent="center" fontSize="sm">
-                            {alias.charAt(0).toUpperCase()}
-                        </Box>
-                        <Stack gap={0}>
-                            <Text fontWeight="bold" fontSize="sm">{alias}</Text>
-                            <HStack gap={1}>
-                                {defaultAccount === account.name && <Tag.Root size="sm" colorPalette="purple" variant="solid"><Tag.Label>默认</Tag.Label></Tag.Root>}
-                                {account.clan_forbid && <Tag.Root size="sm" colorPalette="red" variant="solid"><Tag.Label>公会战禁用</Tag.Label></Tag.Root>}
-                            </HStack>
-                        </Stack>
-                    </HStack>
-                </Table.Cell>
-                <Table.Cell px={3} py={3}>
-                    <StatusBadge />
-                </Table.Cell>
-                <Table.Cell px={3} py={3}>
-                    <HStack gap={1}>
-                        <Tooltip content="配置">
-                            <IconButton aria-label="Settings" as={Link} // @ts-ignore
-                            to={`${DashBoardRoute.to || ''}${account.name}`} size="xs" variant="ghost" colorPalette="blue"> <FiSettings /> </IconButton>
-                        </Tooltip>
-
-                        <Tooltip content="清理日常">
-                            <IconButton aria-label="Clean Daily" size="xs" variant="ghost" colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open}> <FiTarget /> </IconButton>
-                        </Tooltip>
-
-                        <Tooltip content="同步配置">
-                             <IconButton aria-label="Sync Config" size="xs" variant="ghost" colorPalette="teal" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open}> <FiCopy /> </IconButton>
-                        </Tooltip>
-
-                        <Tooltip content="结果">
-                             <IconButton aria-label="View Results" size="xs" variant="ghost" colorPalette="green" onClick={handleDailyResult} loading={buttomLoading.open}> <FiActivity /> </IconButton>
-                        </Tooltip>
-                    </HStack>
-                </Table.Cell>
-            </Table.Row>
-        );
-    }
 
     // 卡片视图渲染
     return (
@@ -799,23 +560,12 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
             </Card.Body>
 
             <Card.Footer pt={2}>
-                 <HStack gap={0} w="full" justify="space-between">
-                     <Tooltip content="详细配置">
-                        <IconButton aria-label="Settings" flex="1" variant="ghost" colorPalette="blue" as={Link} // @ts-ignore
-                            to={DashBoardRoute.to + alias}> <FiSettings /> </IconButton>
-                    </Tooltip>
-
-                     <Tooltip content="立即清理">
-                         <IconButton aria-label="Clean Daily" flex="1" variant="ghost" colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open}> <FiTarget /> </IconButton>
-                    </Tooltip>
-
-                    <Tooltip content="同步配置">
-                         <IconButton aria-label="Sync Config" flex="1" variant="ghost" colorPalette="teal" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open}> <FiCopy /> </IconButton>
-                    </Tooltip>
-
-                    <Tooltip content="运行结果">
-                         <IconButton aria-label="View Result" flex="1" variant="ghost" colorPalette="green" onClick={handleDailyResult} loading={buttomLoading.open}> <FiActivity /> </IconButton>
-                    </Tooltip>
+                 <HStack gap={1} w="full" justify="space-between">
+                    <LabeledActionButton label="配置" icon={<FiSettings />} colorPalette="blue" as={Link} // @ts-ignore
+                        to={DashBoardRoute.to + alias} />
+                    <LabeledActionButton label="清理" icon={<FiTarget />} colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open} />
+                    <LabeledActionButton label="同步" icon={<FiCopy />} colorPalette="teal" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open} />
+                    <LabeledActionButton label="结果" icon={<FiActivity />} colorPalette="green" onClick={handleDailyResult} loading={buttomLoading.open} />
                 </HStack>
             </Card.Footer>
         </Card.Root>
