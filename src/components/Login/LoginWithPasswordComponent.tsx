@@ -1,4 +1,4 @@
-import {
+﻿import {
     Box,
     Button,
     Input,
@@ -18,9 +18,8 @@ import { SubmitHandler, useForm } from 'react-hook-form'
 
 import { Checkbox } from '../../components/ui/checkbox'
 import { Field } from '../../components/ui/field'
-import { Route as InfoRoute } from '@routes/daily/_sidebar/account/index'
+import { Route as InfoRoute } from '@routes/daily/_sidebar/datacenter/index'
 import { postLoginWithPassword } from '@api/Login'
-import { postRegister } from '@api/Register'
 import { toaster } from '../../components/ui/toaster'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -83,7 +82,7 @@ export default function LoginWithPasswordComponent() {
                             direction={{ base: 'column', sm: 'row' }}
                             align={'start'}
                             justify={'space-between'}>
-                            <Checkbox checked={remember} onCheckedChange={(e) => setRemember(!!e.checked)}>记住我</Checkbox>
+                            <Checkbox checked={remember} onCheckedChange={(e) => setRemember(!!e.checked)}>记住账号</Checkbox>
                             <Text 
                                 color="fg.muted" 
                                 fontSize="sm" 
@@ -97,9 +96,7 @@ export default function LoginWithPasswordComponent() {
                         <Button
                             colorPalette="brand"
                             loading={isSubmitting} type='submit'
-                        >
-                            登录
-                        </Button>
+                        >登录</Button>
                         <Button
                             colorPalette="brand"
                             variant="outline"
@@ -127,3 +124,8 @@ export default function LoginWithPasswordComponent() {
         </Box>
     )
 }
+
+
+
+
+

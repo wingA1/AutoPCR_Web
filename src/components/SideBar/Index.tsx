@@ -1,4 +1,4 @@
-import {
+﻿import {
     Box,
     Button,
     Flex,
@@ -13,18 +13,16 @@ import {
     FiCompass,
     FiHome,
     FiUsers,
-    FiDatabase,
 } from 'react-icons/fi'
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
 import { LuMoon, LuSun } from 'react-icons/lu'
 import { useColorMode } from '../ui/color-mode'
 
 import { IconType } from 'react-icons'
-import { Route as InfoRoute } from "@routes/daily/_sidebar/account/index";
+import { Route as InfoRoute } from "@routes/daily/_sidebar/datacenter/index";
 import { Route as LoginRoute } from "@routes/daily/login";
 import { Tooltip } from '../../components/ui/tooltip'
 import { Route as UsersRoute } from "@routes/daily/_sidebar/user/index";
-import { Route as DCRoute } from "@routes/daily/_sidebar/datacenter/index";
 import { ValidateResponse } from '@/interfaces/Account'
 import autopcr from "@/assets/autopcr.svg"
 import { postLogout } from '@api/Login'
@@ -147,9 +145,6 @@ export default function Nav() {
                         <NavItem key="dashboard" href={InfoRoute.to} icon={FiHome} >
                             一览
                         </NavItem>
-                        <NavItem key="datacenter" href={DCRoute.to} icon={FiDatabase}>
-                            数据中台
-                        </NavItem>
                         {role?.admin && <NavItem key="user" href={UsersRoute.to} icon={FiUsers}>
                             用户管理
                         </NavItem>}
@@ -179,9 +174,10 @@ export default function Nav() {
 
             <Box py={0} pb={2} bg="transparent" px={4} textAlign='right'>
                 <Text fontSize="xs" color="fg.muted">
-                    Powered by <a href="https://github.com/cc004/autopcr" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR</a> & <a href="https://github.com/Lanly109/AutoPCR_Web" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR_Web</a> · {APP_VERSION}
+                    Powered by <a href="https://github.com/cc004/autopcr" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR</a> & <a href="https://github.com/Lanly109/AutoPCR_Web" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR_Web</a> 路 {APP_VERSION}
                 </Text>
             </Box>
         </Flex>
     )
 }
+
