@@ -14,9 +14,11 @@ import { createFileRoute } from '@tanstack/react-router'
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as DailyValidateImport } from './routes/daily/validate'
+import { Route as DailyRegisterImport } from './routes/daily/register'
 import { Route as DailyLoginImport } from './routes/daily/login'
 import { Route as DailySidebarImport } from './routes/daily/_sidebar'
 import { Route as DailySidebarUserIndexImport } from './routes/daily/_sidebar/user/index'
+import { Route as DailySidebarDatacenterIndexImport } from './routes/daily/_sidebar/datacenter/index'
 import { Route as DailySidebarAccountIndexImport } from './routes/daily/_sidebar/account/index'
 import { Route as DailySidebarAccountAccountImport } from './routes/daily/_sidebar/account/$account'
 
@@ -36,6 +38,11 @@ const DailyValidateRoute = DailyValidateImport.update({
   getParentRoute: () => DailyRoute,
 } as any)
 
+const DailyRegisterRoute = DailyRegisterImport.update({
+  path: '/register',
+  getParentRoute: () => DailyRoute,
+} as any)
+
 const DailyLoginRoute = DailyLoginImport.update({
   path: '/login',
   getParentRoute: () => DailyRoute,
@@ -50,6 +57,12 @@ const DailySidebarUserIndexRoute = DailySidebarUserIndexImport.update({
   path: '/user/',
   getParentRoute: () => DailySidebarRoute,
 } as any)
+
+const DailySidebarDatacenterIndexRoute =
+  DailySidebarDatacenterIndexImport.update({
+    path: '/datacenter/',
+    getParentRoute: () => DailySidebarRoute,
+  } as any)
 
 const DailySidebarAccountIndexRoute = DailySidebarAccountIndexImport.update({
   path: '/account/',
@@ -79,6 +92,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DailyLoginImport
       parentRoute: typeof DailyImport
     }
+    '/daily/register': {
+      preLoaderRoute: typeof DailyRegisterImport
+      parentRoute: typeof DailyImport
+    }
     '/daily/validate': {
       preLoaderRoute: typeof DailyValidateImport
       parentRoute: typeof DailyImport
@@ -89,6 +106,10 @@ declare module '@tanstack/react-router' {
     }
     '/daily/_sidebar/account/': {
       preLoaderRoute: typeof DailySidebarAccountIndexImport
+      parentRoute: typeof DailySidebarImport
+    }
+    '/daily/_sidebar/datacenter/': {
+      preLoaderRoute: typeof DailySidebarDatacenterIndexImport
       parentRoute: typeof DailySidebarImport
     }
     '/daily/_sidebar/user/': {
@@ -105,9 +126,11 @@ export const routeTree = rootRoute.addChildren([
     DailySidebarRoute.addChildren([
       DailySidebarAccountAccountRoute,
       DailySidebarAccountIndexRoute,
+      DailySidebarDatacenterIndexRoute,
       DailySidebarUserIndexRoute,
     ]),
     DailyLoginRoute,
+    DailyRegisterRoute,
     DailyValidateRoute,
   ]),
 ])

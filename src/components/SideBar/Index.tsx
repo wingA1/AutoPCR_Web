@@ -13,6 +13,7 @@ import {
     FiCompass,
     FiHome,
     FiUsers,
+    FiDatabase,
 } from 'react-icons/fi'
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
 import { LuMoon, LuSun } from 'react-icons/lu'
@@ -23,6 +24,7 @@ import { Route as InfoRoute } from "@routes/daily/_sidebar/account/index";
 import { Route as LoginRoute } from "@routes/daily/login";
 import { Tooltip } from '../../components/ui/tooltip'
 import { Route as UsersRoute } from "@routes/daily/_sidebar/user/index";
+import { Route as DCRoute } from "@routes/daily/_sidebar/datacenter/index";
 import { ValidateResponse } from '@/interfaces/Account'
 import autopcr from "@/assets/autopcr.svg"
 import { postLogout } from '@api/Login'
@@ -144,6 +146,9 @@ export default function Nav() {
                     <HStack as={'nav'} gap={isSmallScreen ? 1 : 4}>
                         <NavItem key="dashboard" href={InfoRoute.to} icon={FiHome} >
                             一览
+                        </NavItem>
+                        <NavItem key="datacenter" href={DCRoute.to} icon={FiDatabase}>
+                            数据中台
                         </NavItem>
                         {role?.admin && <NavItem key="user" href={UsersRoute.to} icon={FiUsers}>
                             用户管理

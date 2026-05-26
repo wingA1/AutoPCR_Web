@@ -58,12 +58,7 @@ export default function LoginWithPasswordComponent() {
         await navigate({ to: InfoRoute.to });
     }
 
-    const handleRegister: SubmitHandler<Inputs> = async (values) => {
-        const res = await postRegister(values.qq, values.password);
-        handleRember(values);
-        toaster.create({ title: "注册成功", type: "success", description: res });
-        await navigate({ to: InfoRoute.to });
-    }
+    
 
     return (
         <Box w="full">
@@ -108,8 +103,7 @@ export default function LoginWithPasswordComponent() {
                         <Button
                             colorPalette="brand"
                             variant="outline"
-                            loading={isSubmitting}
-                            onClick={handleSubmit(handleRegister)}
+                            onClick={() => navigate({ to: '/daily/register' })}
                         >
                             注册新账号
                         </Button>
