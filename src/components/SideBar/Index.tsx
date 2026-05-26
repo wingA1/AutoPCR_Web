@@ -12,23 +12,20 @@
 import {
     FiCompass,
     FiHome,
-    FiUsers,
 } from 'react-icons/fi'
 import { Link, Outlet, useNavigate } from '@tanstack/react-router'
 import { LuMoon, LuSun } from 'react-icons/lu'
 import { useColorMode } from '../ui/color-mode'
 
 import { IconType } from 'react-icons'
-import { Route as InfoRoute } from "@routes/daily/_sidebar/datacenter/index";
+import { Route as InfoRoute } from "@routes/daily/_sidebar/account/index";
 import { Route as LoginRoute } from "@routes/daily/login";
 import { Tooltip } from '../../components/ui/tooltip'
-import { Route as UsersRoute } from "@routes/daily/_sidebar/user/index";
 import { ValidateResponse } from '@/interfaces/Account'
 import autopcr from "@/assets/autopcr.svg"
 import { postLogout } from '@api/Login'
 import { toaster } from '../../components/ui/toaster'
 import {useEffect} from 'react'
-import {useUserRole} from "@api/Account.ts";
 import RunningStatus from '../Account/RunningStatus';
 
 interface NavItemProps extends FlexProps {
@@ -98,7 +95,6 @@ const NavItem = ({ icon, children, href, onClick, ...rest }: NavItemProps) => {
 
 export default function Nav() {
     const { colorMode, toggleColorMode } = useColorMode()
-    const role = useUserRole();
     const isSmallScreen = useBreakpointValue({ base: true, md: false });
 
     const navigate = useNavigate();
@@ -145,9 +141,6 @@ export default function Nav() {
                         <NavItem key="dashboard" href={InfoRoute.to} icon={FiHome} >
                             一览
                         </NavItem>
-                        {role?.admin && <NavItem key="user" href={UsersRoute.to} icon={FiUsers}>
-                            用户管理
-                        </NavItem>}
                         <NavItem key="logout" icon={FiCompass} onClick={handleLogout}>
                             登出
                         </NavItem>
