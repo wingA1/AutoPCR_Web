@@ -38,7 +38,7 @@ import { useDisclosure } from '@chakra-ui/react';
 import ConfigSyncModal from './ConfigSyncModal';
 import DataCenterView from '../DataCenter/DataCenterView';
 
-const handle: Map<string, (arg0: boolean) => void> = new Map<string, (arg0: boolean) => void>();
+const handle: Map<string, (arg0: boolean) => Promise<void> | void> = new Map<string, (arg0: boolean) => Promise<void> | void>();
 
 function LabeledActionButton({
     label,
@@ -175,6 +175,41 @@ export function DashBoard() {
     const handleCleanDailyAll = () => {
         for (const fn of handle.values()) {
             fn(false);
+        }
+    };
+
+    const handleCleanDailyByAliases = async (aliases: string[]) => {
+        const targets = aliases.length ? aliases : (userInfo?.default_account ? [userInfo.default_account] : []);
+        if (!targets.length) {
+            toaster.create({ type: 'info', title: '请先选择账号' });
+            return;
+        }
+
+        let executed = false;
+        for (const accountName of targets) {
+            const fn = handle.get(accountName);
+            if (fn) {
+                executed = true;
+                await fn(false);
+                continue;
+            }
+
+            executed = true;
+            increaseCount();
+            toaster.create({ type: 'info', title: `开始为${accountName}清理日常...` });
+            try {
+                const res = await postAccountAreaDaily(accountName);
+                toaster.create({ type: 'success', title: `${accountName}清日常成功` });
+                updateAccountInfo(res);
+            } catch (err: any) {
+                toaster.create({ type: 'error', title: `${accountName}清日常失败`, description: (err?.response?.data as string) || '网络错误' });
+            } finally {
+                decreaseCount();
+            }
+        }
+
+        if (!executed) {
+            toaster.create({ type: 'info', title: '对应账号暂未加载，请稍后再试' });
         }
     };
 
@@ -437,6 +472,7 @@ export function DashBoard() {
             <DataCenterView
                 selectedAccounts={selectedAccounts}
                 defaultAccount={userInfo?.default_account || ''}
+                onCleanAccounts={handleCleanDailyByAliases}
             />
         </Box>
         </Box>

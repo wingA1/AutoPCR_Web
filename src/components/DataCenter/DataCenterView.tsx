@@ -1,12 +1,13 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
 import { Badge, Box, Button, Card, Flex, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
-import { getAccountDailyResultList, getDCAccountModules, postDCClean, getDCDailyResult, getDCOverview, postDCSummary } from '@api/DataCenter'
+import { getAccountDailyResultList, getDCAccountModules, getDCDailyResult, getDCOverview, postDCSummary } from '@api/DataCenter'
 import type { DCOverview } from '@api/DataCenter'
 import { toaster } from '@/components/ui/toaster'
 
 type Props = {
   selectedAccounts: string[]
   defaultAccount: string
+  onCleanAccounts?: (aliases: string[]) => Promise<void> | void
 }
 
 type StatusItem = {
@@ -17,6 +18,8 @@ type StatusItem = {
   detail: string
   lastTime: string
 }
+
+type StatusFilter = 'all' | StatusItem['status']
 
 const statusMap: Record<string, StatusItem['status']> = {
   成功: 'done',
@@ -44,6 +47,18 @@ const statusColor: Record<StatusItem['status'], string> = {
   failed: 'red',
   not_open: 'gray',
   skipped: 'gray',
+}
+
+const statusFilterOrder: StatusFilter[] = ['all', 'done', 'partial', 'pending', 'running', 'failed', 'not_open', 'skipped']
+
+const statusFilterLabel: Record<StatusFilter, string> = {
+  all: '全部',
+  ...statusLabel,
+}
+
+const statusFilterColor: Record<StatusFilter, string> = {
+  all: 'blue',
+  ...statusColor,
 }
 
 function compactNum(n?: number) {
@@ -80,18 +95,20 @@ function toStatusItems(mod: any, dailyResult: any): StatusItem[] {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card.Root bg="bg.panel" borderWidth="1px" borderColor="border.subtle" borderRadius="lg" h="132px">
-      <Card.Body display="flex" justifyContent="space-between" flexDirection="column">
-        <Text fontSize="sm" color="fg.muted">{label}</Text>
-        <Text fontSize="3xl" fontWeight="bold">{value}</Text>
+    <Card.Root bg="bg.panel" borderWidth="1px" borderColor="border.subtle" borderRadius="lg" minH="118px">
+      <Card.Body display="flex" justifyContent="space-between" flexDirection="column" gap={3}>
+        <Text fontSize="xs" color="fg.muted">{label}</Text>
+        <Text fontSize="2xl" fontWeight="bold" lineHeight="1.25" wordBreak="break-word">{value}</Text>
       </Card.Body>
     </Card.Root>
   )
 }
 
-export default function DataCenterView({ selectedAccounts, defaultAccount }: Props) {
+export default function DataCenterView({ selectedAccounts, defaultAccount, onCleanAccounts }: Props) {
   const [tab, setTab] = useState('overview')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [loading, setLoading] = useState(false)
+  const [cleaning, setCleaning] = useState(false)
   const [overview, setOverview] = useState<DCOverview | null>(null)
   const [moduleDef, setModuleDef] = useState<any>(null)
   const [dailyResult, setDailyResult] = useState<any>(null)
@@ -149,14 +166,18 @@ export default function DataCenterView({ selectedAccounts, defaultAccount }: Pro
   }
 
   async function runClean() {
-    if (!active.length) return
+    if (!active.length || cleaning) return
+    setCleaning(true)
     try {
-      await postDCClean(active)
-      toaster.create({ type: 'success', title: '已触发清理' })
+      if (onCleanAccounts) {
+        await onCleanAccounts(active)
+      }
       if (active.length > 1) await loadSummary(active)
       else await loadSingle(active[0])
     } catch {
       toaster.create({ type: 'error', title: '清理触发失败' })
+    } finally {
+      setCleaning(false)
     }
   }
 
@@ -173,7 +194,7 @@ export default function DataCenterView({ selectedAccounts, defaultAccount }: Pro
       <Box>
         <Flex justify="space-between" align="center" mb={4}>
           <Text fontSize="lg" fontWeight="bold">多账号汇总（{summaryList.length}）</Text>
-          <Button size="sm" colorPalette="blue" onClick={runClean}>批量清理</Button>
+          <Button size="sm" colorPalette="blue" onClick={runClean} loading={cleaning}>批量清理</Button>
         </Flex>
         <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={4}>
           {summaryList.map((s: any) => {
@@ -196,6 +217,14 @@ export default function DataCenterView({ selectedAccounts, defaultAccount }: Pro
   }
 
   const statusItems = toStatusItems(moduleDef, dailyResult)
+  const statusCounts = statusItems.reduce<Record<StatusFilter, number>>((acc, item) => {
+    acc.all += 1
+    acc[item.status] += 1
+    return acc
+  }, { all: 0, done: 0, partial: 0, pending: 0, running: 0, failed: 0, not_open: 0, skipped: 0 })
+  const filteredStatusItems = statusFilter === 'all'
+    ? statusItems
+    : statusItems.filter((item) => item.status === statusFilter)
 
   return (
     <Box>
@@ -207,7 +236,7 @@ export default function DataCenterView({ selectedAccounts, defaultAccount }: Pro
             <Tabs.Trigger value="alerts">异常预警</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
-        <Button size="sm" colorPalette="blue" onClick={runClean}>执行清理</Button>
+        <Button size="sm" colorPalette="blue" onClick={runClean} loading={cleaning}>执行清理</Button>
       </Flex>
 
       {tab === 'overview' && overview && (
@@ -229,13 +258,40 @@ export default function DataCenterView({ selectedAccounts, defaultAccount }: Pro
       {tab === 'status' && (
         <Stack gap={2}>
           {statusItems.length === 0 && <Text color="fg.muted">暂无任务状态</Text>}
-          {statusItems.map((it) => (
-            <Flex key={it.key} p={3} bg="bg.subtle" borderRadius="md" align="center" gap={3}>
-              <Badge colorPalette={statusColor[it.status]} minW="62px" textAlign="center">{it.statusText}</Badge>
-              <Text fontWeight="medium" flex={1}>{it.name}</Text>
-              {it.lastTime && <Text fontSize="xs" color="fg.muted">{it.lastTime}</Text>}
+          {statusItems.length > 0 && (
+            <Flex gap={2} wrap="wrap" mb={2}>
+              {statusFilterOrder.map((status) => (
+                <Button
+                  key={status}
+                  size="xs"
+                  variant={statusFilter === status ? 'solid' : 'outline'}
+                  colorPalette={statusFilterColor[status]}
+                  onClick={() => setStatusFilter(status)}
+                >
+                  {statusFilterLabel[status]} {statusCounts[status]}
+                </Button>
+              ))}
             </Flex>
-          ))}
+          )}
+          {statusItems.length > 0 && filteredStatusItems.length === 0 && (
+            <Box p={4} bg="bg.subtle" borderRadius="md">
+              <Text color="fg.muted">当前筛选下暂无任务</Text>
+            </Box>
+          )}
+          <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={3}>
+            {filteredStatusItems.map((it) => (
+              <Card.Root key={it.key} bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" borderRadius="lg" minH="118px">
+                <Card.Body display="flex" flexDirection="column" gap={3}>
+                  <Flex justify="space-between" align="start" gap={3}>
+                    <Badge colorPalette={statusColor[it.status]}>{it.statusText}</Badge>
+                    {it.lastTime && <Text fontSize="xs" color="fg.muted" textAlign="right">{it.lastTime}</Text>}
+                  </Flex>
+                  <Text fontSize="md" fontWeight="bold" lineHeight="1.25">{it.name}</Text>
+                  {it.detail && <Text fontSize="xs" color="fg.muted" lineClamp={2}>{it.detail}</Text>}
+                </Card.Body>
+              </Card.Root>
+            ))}
+          </SimpleGrid>
         </Stack>
       )}
 
