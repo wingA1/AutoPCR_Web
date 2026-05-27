@@ -39,6 +39,12 @@ import ConfigSyncModal from './ConfigSyncModal';
 import DataCenterView from '../DataCenter/DataCenterView';
 
 const handle: Map<string, (arg0: boolean) => Promise<void> | void> = new Map<string, (arg0: boolean) => Promise<void> | void>();
+const NEW_ACCOUNT_CONFIG_KEY = 'autopcr:new-account-config';
+
+function getAccountConfigRoute(alias: string) {
+    const base = DashBoardRoute.to.endsWith('/') ? DashBoardRoute.to : `${DashBoardRoute.to}/`;
+    return `${base}${encodeURIComponent(alias)}`;
+}
 
 function LabeledActionButton({
     label,
@@ -92,6 +98,7 @@ export function DashBoard() {
     const [alias, setAlias] = useState<string>('');
     const [count, increaseCount, decreaseCount] = useCountHook();
     const [selectedAccounts, setSelectedAccounts] = useState<string[]>([]);
+    const [creatingAccount, setCreatingAccount] = useState(false);
 
     // Status colors can remain as functional colors
 
@@ -117,6 +124,7 @@ export function DashBoard() {
         getUserInfo()
             .then((res) => {
                 setUserInfo(res);
+                setSelectedAccounts((prev) => (prev.length ? prev : (res.default_account ? [res.default_account] : [])));
             })
             .catch((err: AxiosError) => {
                 toaster.create({ type: 'error', title: (err?.response?.data as string) || '网络错误' });
@@ -124,6 +132,7 @@ export function DashBoard() {
     }, [freshAccountInfo.open]);
 
     const handleDefaultAccount = (value: string) => {
+        setSelectedAccounts(value ? [value] : []);
         putUserInfo({ default_account: value })
             .then((res) => {
                 setUserInfo({ ...userInfo, default_account: value });
@@ -213,10 +222,11 @@ export function DashBoard() {
         }
     };
 
-    const handleCreateAccount = () => {
+    const handleCreateAccount = async () => {
         if (creatAccountSwitch.open) {
             // 检查alias是否为空
-            if (!alias || alias.trim() === '') {
+            const newAlias = alias.trim();
+            if (!newAlias) {
                 toaster.create({
                     type: 'error',
                     title: '创建账号失败',
@@ -225,24 +235,30 @@ export function DashBoard() {
                 return;
             }
 
-            postAccount(alias)
-                .then((res) => {
+            setCreatingAccount(true);
+            try {
+                const res = await postAccount(newAlias);
                     toaster.create({
                         type: 'success',
                         title: '创建账号成功',
                         description: res,
                     });
-                    creatAccountSwitch.onToggle();
+                toaster.create({ type: 'info', title: '跳转配置中...' });
+                sessionStorage.setItem(NEW_ACCOUNT_CONFIG_KEY, newAlias);
+                setSelectedAccounts([newAlias]);
+                creatAccountSwitch.onToggle();
                     setAlias(''); // 重置输入框
                     freshAccountInfo.onToggle();
-                })
-                .catch((err: AxiosError) => {
+                await navigate({ to: `${getAccountConfigRoute(newAlias)}?newAccount=1` as any });
+            } catch (err: any) {
                     toaster.create({
                         type: 'error',
                         title: '创建账号失败',
                         description: (err?.response?.data as string) || '网络错误',
                     });
-                });
+            } finally {
+                setCreatingAccount(false);
+            }
         } else {
             creatAccountSwitch.onToggle();
         }
@@ -348,7 +364,7 @@ export function DashBoard() {
                         colorPalette="blue"
                         as={Link}
                         // @ts-ignore
-                        to={`${DashBoardRoute.to || ''}BATCH_RUNNER`}
+                        to={getAccountConfigRoute('BATCH_RUNNER')}
                         loading={count != 0}
                     />
                 </HStack>
@@ -377,6 +393,7 @@ export function DashBoard() {
                                 icon={creatAccountSwitch.open ? <FiCheck /> : <FiUserPlus />}
                                 colorPalette={creatAccountSwitch.open ? 'red' : 'green'}
                                 variant="solid"
+                                loading={creatingAccount}
                                 onClick={() => {
                                     if (creatAccountSwitch.open && !alias) creatAccountSwitch.onToggle();
                                     else if (creatAccountSwitch.open && alias) handleCreateAccount();
@@ -409,7 +426,7 @@ export function DashBoard() {
                         onChange={(e) => setAlias(e.target.value)}
                         onKeyDown={(e) => { if(e.key === 'Enter') handleCreateAccount() }}
                     />
-                    <Button size="sm" colorPalette="green" onClick={handleCreateAccount}>创建</Button>
+                    <Button size="sm" colorPalette="green" loading={creatingAccount} onClick={handleCreateAccount}>创建</Button>
                 </Flex>
             )}
 
@@ -447,6 +464,8 @@ export function DashBoard() {
                                     increaseCount={increaseCount}
                                     decreaseCount={decreaseCount}
                                     updateAccountInfo={updateAccountInfo}
+                                    selected={selectedAccounts.includes(account.name) || userInfo?.default_account === account.name}
+                                    onSelect={() => handleDefaultAccount(account.name)}
                                     onOpenSyncConfig={(accountAlias) => {
                                         NiceModal.show(ConfigSyncModal, { sourceAccount: accountAlias });
                                     }}
@@ -485,10 +504,12 @@ interface AccountInfoProps {
     increaseCount: () => void;
     decreaseCount: () => void;
     updateAccountInfo: (updatedAccount: AccountInfoInterface) => void;
+    selected: boolean;
+    onSelect: () => void;
     onOpenSyncConfig?: (alias: string) => void;
 }
 
-function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAccountInfo, onOpenSyncConfig }: AccountInfoProps) {
+function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAccountInfo, selected, onSelect, onOpenSyncConfig }: AccountInfoProps) {
     const buttomLoading = useDisclosure();
     const alias = account.name;
     const deleteConfirm = useDisclosure();
@@ -540,13 +561,15 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
     return (
         <Card.Root
             key={alias}
-            bg="bg.panel"
-            shadow="sm"
+            bg={selected ? 'blue.subtle/15' : 'bg.panel'}
+            shadow={selected ? 'md' : 'sm'}
             borderRadius="2xl"
-            borderWidth="1px"
-            borderColor="border.subtle"
+            borderWidth={selected ? '2px' : '1px'}
+            borderColor={selected ? 'blue.focusRing' : 'border.subtle'}
             transition="all 0.2s"
             _hover={{ shadow: 'lg', transform: 'translateY(-2px)', borderColor: "blue.focusRing" }}
+            cursor="pointer"
+            onClick={onSelect}
         >
             <Card.Header pb={2}>
                 <Flex justify="space-between" align="start">
@@ -567,7 +590,10 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                         variant="ghost"
                         colorPalette="gray"
                         aria-label="Delete"
-                        onClick={deleteConfirm.onOpen}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConfirm.onOpen();
+                        }}
                         _hover={{ bg: "red.subtle", color: "red.fg" }}
                     >
                         <CloseButton />
@@ -595,10 +621,10 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                 </Stack>
             </Card.Body>
 
-            <Card.Footer pt={2}>
+            <Card.Footer pt={2} onClick={(e) => e.stopPropagation()}>
                  <HStack gap={1} w="full" justify="space-between">
                     <LabeledActionButton label="配置" icon={<FiSettings />} colorPalette="blue" as={Link} // @ts-ignore
-                        to={DashBoardRoute.to + alias} />
+                        to={getAccountConfigRoute(alias)} />
                     <LabeledActionButton label="清理" icon={<FiTarget />} colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open} />
                     <LabeledActionButton label="同步" icon={<FiCopy />} colorPalette="teal" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open} />
                     <LabeledActionButton label="结果" icon={<FiActivity />} colorPalette="green" onClick={handleDailyResult} loading={buttomLoading.open} />

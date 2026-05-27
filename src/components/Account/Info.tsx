@@ -26,34 +26,54 @@ interface InfoProps {
     onSaveSuccess?: () => void;
 }
 
+const NEW_ACCOUNT_CONFIG_KEY = 'autopcr:new-account-config';
+
 const fadeEntry = keyframes`
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 `;
 
 export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
-    const [username, setUsername] = useState<string>(accountInfo?.username);
-    const [password, setPassword] = useState<string>(accountInfo?.password);
-    const [channel, setChannel] = useState<string>(accountInfo?.channel);
+    const isNewAccountConfig = sessionStorage.getItem(NEW_ACCOUNT_CONFIG_KEY) === accountInfo?.alias
+        || new URLSearchParams(window.location.search).get('newAccount') === '1';
+    const [username, setUsername] = useState<string>(isNewAccountConfig ? '' : accountInfo?.username || '');
+    const [password, setPassword] = useState<string>(isNewAccountConfig ? '' : accountInfo?.password || '');
+    const [channel, setChannel] = useState<string>(accountInfo?.channel || '');
     const [batchAccounts, setBatchAccounts] = useState<(string | number)[]>(accountInfo?.batch_accounts || []);
     const { open: isOpen, onOpen, onClose } = useDisclosure();
     const [allChecked, setAllChecked] = useState<boolean>(false);
     const [unselectedAccounts, setUnselectedAccounts] = useState<(string | number)[]>([]);
 
     useEffect(() => {
+        const newAccountAlias = sessionStorage.getItem(NEW_ACCOUNT_CONFIG_KEY);
+        const shouldClearLogin = newAccountAlias === accountInfo?.alias
+            || new URLSearchParams(window.location.search).get('newAccount') === '1';
+        setUsername(shouldClearLogin ? '' : accountInfo?.username || '');
+        setPassword(shouldClearLogin ? '' : accountInfo?.password || '');
+        setChannel(accountInfo?.channel || '');
+        setBatchAccounts(accountInfo?.batch_accounts || []);
         if (accountInfo?.all_accounts && accountInfo?.batch_accounts) {
             const unselected = accountInfo.all_accounts.filter((account) => !accountInfo.batch_accounts.includes(account));
             setUnselectedAccounts(unselected);
             setAllChecked(accountInfo.batch_accounts.length === accountInfo.all_accounts.length);
+        } else {
+            setUnselectedAccounts([]);
+            setAllChecked(false);
         }
     }, [accountInfo]);
 
     const handleSave = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         onOpen();
-        putAccount(accountInfo?.alias, username, password, channel, batchAccounts)
+            putAccount(accountInfo?.alias, username, password, channel, batchAccounts)
             .then((res) => {
                 toaster.create({ title: '\u4fdd\u5b58\u6210\u529f', description: res, type: 'success' });
+                if (sessionStorage.getItem(NEW_ACCOUNT_CONFIG_KEY) === accountInfo?.alias) {
+                    sessionStorage.removeItem(NEW_ACCOUNT_CONFIG_KEY);
+                }
+                if (new URLSearchParams(window.location.search).get('newAccount') === '1') {
+                    window.history.replaceState({}, '', window.location.pathname);
+                }
                 if (onSaveSuccess) {
                     onSaveSuccess();
                 }
@@ -119,34 +139,42 @@ export default function Info({ accountInfo, onSaveSuccess }: InfoProps) {
                 )}
             </Flex>
 
-            <form onSubmit={handleSave}>
+            <form onSubmit={handleSave} autoComplete="off">
                 <Stack gap={6}>
                     {accountInfo?.alias !== 'BATCH_RUNNER' && (
                         <>
                             <Field label="账号" required>
                                 <Input
+                                    name={`autopcr-config-${accountInfo?.alias}-username`}
+                                    autoComplete="new-password"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
                                     size="lg"
                                     placeholder={'\u8bf7\u8f93\u5165\u624b\u673a\u53f7\u6216\u8d26\u53f7'}
                                     type="text"
                                     variant="subtle"
-                                    defaultValue={accountInfo?.username || ''}
+                                    value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                 />
                             </Field>
                             <Field label="密码" required>
                                 <Input
+                                    name={`autopcr-config-${accountInfo?.alias}-password`}
+                                    autoComplete="new-password"
+                                    data-lpignore="true"
+                                    data-1p-ignore="true"
                                     size="lg"
                                     placeholder={'\u8bf7\u8f93\u5165\u5bc6\u7801'}
                                     type="password"
                                     variant="subtle"
-                                    defaultValue={accountInfo?.password || ''}
+                                    value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
                             </Field>
                             <Field label="平台" required>
                                 <NativeSelect.Root size="lg" variant="subtle">
                                     <NativeSelect.Field
-                                        defaultValue={accountInfo?.channel}
+                                        value={channel}
                                         onChange={(e) => setChannel(e.target.value)}
                                     >
                                         {accountInfo?.channel_option.map((option) => (

@@ -1,5 +1,5 @@
 import { Box, Tabs } from '@chakra-ui/react'
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { AccountResponse } from '@interfaces/Account'
 import Area from '@components/Account/Area'
@@ -7,6 +7,9 @@ import ConfigImportExport from "@components/Account/ConfigImportExport.tsx";
 import Info from '@components/Account/Info'
 import { createFileRoute } from '@tanstack/react-router'
 import { getAccount } from '@api/Account'
+
+const NEW_ACCOUNT_CONFIG_KEY = 'autopcr:new-account-config';
+
 export const Route = createFileRoute('/daily/_sidebar/account/$account')({
     component: AccountComponent,
     loader: ({ params: { account } }) => getAccount(account),
@@ -19,6 +22,12 @@ function AccountComponent() {
     const { account } = Route.useParams();
     const initialAccountInfo = Route.useLoaderData<AccountResponse>();
     const [accountInfo, setAccountInfo] = useState<AccountResponse>(initialAccountInfo);
+    const isNewAccountConfig = sessionStorage.getItem(NEW_ACCOUNT_CONFIG_KEY) === account
+        || new URLSearchParams(window.location.search).get('newAccount') === '1';
+    const displayAccountInfo = useMemo(
+        () => (isNewAccountConfig ? { ...accountInfo, username: '', password: '' } : accountInfo),
+        [accountInfo, isNewAccountConfig],
+    );
 
     // 添加刷新数据的函数
     const refreshAccountData = async () => {
@@ -39,7 +48,7 @@ function AccountComponent() {
         <Tabs.Root 
             lazyMount 
             variant="plain" 
-            defaultValue={accountInfo?.username != '' && accountInfo?.password != '' ? "1" : "0"} 
+            defaultValue={displayAccountInfo?.username != '' && displayAccountInfo?.password != '' ? "1" : "0"}
             display={'flex'} 
             flexDirection={'column'} 
             height={'100%'}
@@ -96,13 +105,13 @@ function AccountComponent() {
             </Tabs.List>
             <Box flex={1} overflow={'auto'}>
                 <Tabs.Content value="0">
-                    <Info accountInfo={accountInfo} onSaveSuccess={refreshAccountData} />
-                    <ConfigImportExport alias={accountInfo?.alias} areas={accountInfo?.area} onImportSuccess={refreshAccountData} />
+                    <Info accountInfo={displayAccountInfo} onSaveSuccess={refreshAccountData} />
+                    <ConfigImportExport alias={displayAccountInfo?.alias} areas={displayAccountInfo?.area} onImportSuccess={refreshAccountData} />
                 </Tabs.Content>
-                {accountInfo?.area.map((area, index) => (
+                {displayAccountInfo?.area.map((area, index) => (
                     <Tabs.Content value={String(index + 1)} key={area?.key}>
                         {' '}
-                        <Area alias={accountInfo?.alias} keys={area?.key} />{' '}
+                        <Area alias={displayAccountInfo?.alias} keys={area?.key} />{' '}
                     </Tabs.Content>
                 ))}
             </Box>
