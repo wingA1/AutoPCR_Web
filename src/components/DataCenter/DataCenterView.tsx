@@ -68,6 +68,18 @@ function compactNum(n?: number) {
   return n.toLocaleString()
 }
 
+function compactTalentLevel(value?: string) {
+  if (!value) return '暂无同步数据'
+  const matches = [...value.matchAll(/([^\/\n\d]*)(\d+)\s*(?:->|\u2192)\s*\d+/g)]
+  if (matches.length > 0) {
+    return matches
+      .map((match) => `${match[1].trim()}${match[2]}`)
+      .join(' / ')
+  }
+  const firstNumber = value.match(/\d+/)
+  return firstNumber ? firstNumber[0] : value.split(/[\/\n]/)[0] || '暂无同步数据'
+}
+
 function toStatusItems(mod: any, dailyResult: any): StatusItem[] {
   if (!mod) return []
   const order: string[] = mod.order || []
@@ -236,6 +248,21 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
             <Tabs.Trigger value="alerts">异常预警</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
+        {overview?.daily_clean_time && (
+          <Box
+            flex="1"
+            maxW="380px"
+            px={4}
+            py={2}
+            bg="bg.subtle"
+            borderWidth="1px"
+            borderColor="border.subtle"
+            borderRadius="lg"
+          >
+            <Text fontSize="xs" color="fg.muted">清日常时间</Text>
+            <Text fontSize="sm" fontWeight="bold">{overview.daily_clean_time}</Text>
+          </Box>
+        )}
         <Button size="sm" colorPalette="blue" onClick={runClean} loading={cleaning}>执行清理</Button>
       </Flex>
 
@@ -247,11 +274,12 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
           <StatCard label="钻石" value={compactNum(overview.jewel)} />
           <StatCard label="玛那" value={compactNum(overview.mana)} />
           <StatCard label="扫荡券" value={compactNum(overview.sweep_ticket)} />
+          <StatCard label="JJC币" value={compactNum(overview.arena_coin)} />
+          <StatCard label="PJJC币" value={compactNum(overview.grand_arena_coin)} />
           <StatCard label="母猪石" value={`${overview.goddess_stone}`} />
           <StatCard label="全角色战力" value={compactNum(overview.total_power)} />
           <StatCard label="已氪体数" value={`${overview.recover_stamina_count}`} />
-          <StatCard label="数据时间" value={overview.daily_clean_time || '暂无同步数据'} />
-          <StatCard label="清日常时间" value={overview.daily_clean_time || '暂无同步数据'} />
+          <StatCard label="深域等级" value={compactTalentLevel(overview.talent_level)} />
         </Box>
       )}
 

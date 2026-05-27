@@ -6,7 +6,9 @@ export { getUserInfo, getAccountDailyResultList };
 export interface DCOverview {
     alias: string; nickname: string; stamina: number; stamina_max: number;
     level: number; jewel: number; mana: number; sweep_ticket: number;
+    arena_coin: number; grand_arena_coin: number;
     goddess_stone: number; heart_fragment: number; total_power: number;
+    talent_level: string;
     recover_stamina_count: number; daily_clean_time: string; daily_clean_status: string;
 }
 
