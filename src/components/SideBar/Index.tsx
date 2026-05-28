@@ -167,7 +167,7 @@ export default function Nav() {
 
             <Box py={0} pb={2} bg="transparent" px={4} textAlign='right'>
                 <Text fontSize="xs" color="fg.muted">
-                    Powered by <a href="https://github.com/cc004/autopcr" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR</a> & <a href="https://github.com/Lanly109/AutoPCR_Web" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR_Web</a> 路 {APP_VERSION}
+                    Powered by <a href="https://github.com/cc004/autopcr" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR</a> & <a href="https://github.com/Lanly109/AutoPCR_Web" target="_blank" rel="noreferrer" style={{color: "inherit", textDecoration: "none"}}>AutoPCR_Web</a> · {APP_VERSION} · Improvements by wing
                 </Text>
             </Box>
         </Flex>

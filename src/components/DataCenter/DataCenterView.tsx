@@ -68,16 +68,25 @@ function compactNum(n?: number) {
   return n.toLocaleString()
 }
 
-function compactTalentLevel(value?: string) {
-  if (!value) return '暂无同步数据'
-  const matches = [...value.matchAll(/([^\/\n\d]*)(\d+)\s*(?:->|\u2192)\s*\d+/g)]
-  if (matches.length > 0) {
-    return matches
-      .map((match) => `${match[1].trim()}${match[2]}`)
-      .join(' / ')
+function parseTalentLevels(value?: string): { name: string; level: string }[] {
+  if (!value) return []
+  const results: { name: string; level: string }[] = []
+  const pattern = /([^\d\s\/\n,;]+)\s*(\d+)\s*(?:->|→|➡)?\s*\d*/g
+  let match
+  while ((match = pattern.exec(value)) !== null) {
+    if (match[1] && match[2]) {
+      results.push({ name: match[1].trim(), level: match[2] })
+    }
   }
-  const firstNumber = value.match(/\d+/)
-  return firstNumber ? firstNumber[0] : value.split(/[\/\n]/)[0] || '暂无同步数据'
+  if (results.length === 0) {
+    const parts = value.split(/[\n\/,;]/).map(s => s.trim()).filter(Boolean)
+    for (const part of parts) {
+      const m = part.match(/^(.*?)(\d+)$/)
+      if (m) results.push({ name: m[1].trim(), level: m[2] })
+      else if (part) results.push({ name: part, level: '' })
+    }
+  }
+  return results
 }
 
 function toStatusItems(mod: any, dailyResult: any): StatusItem[] {
@@ -267,20 +276,47 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
       </Flex>
 
       {tab === 'overview' && overview && (
-        <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(220px, 1fr))" gap={4}>
-          <StatCard label="昵称" value={overview.nickname || overview.alias} />
-          <StatCard label="体力" value={`${overview.stamina}/${overview.stamina_max}`} />
-          <StatCard label="等级" value={`${overview.level}`} />
-          <StatCard label="钻石" value={compactNum(overview.jewel)} />
-          <StatCard label="玛那" value={compactNum(overview.mana)} />
-          <StatCard label="扫荡券" value={compactNum(overview.sweep_ticket)} />
-          <StatCard label="JJC币" value={compactNum(overview.arena_coin)} />
-          <StatCard label="PJJC币" value={compactNum(overview.grand_arena_coin)} />
-          <StatCard label="母猪石" value={`${overview.goddess_stone}`} />
-          <StatCard label="全角色战力" value={compactNum(overview.total_power)} />
-          <StatCard label="已氪体数" value={`${overview.recover_stamina_count}`} />
-          <StatCard label="深域等级" value={compactTalentLevel(overview.talent_level)} />
-        </Box>
+        <Stack gap={6}>
+          <Box>
+            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>基础信息</Text>
+            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={3}>
+              <StatCard label="昵称" value={overview.nickname || overview.alias} />
+              <StatCard label="等级" value={`${overview.level}`} />
+              <StatCard label="体力" value={`${overview.stamina}/${overview.stamina_max}`} />
+              <StatCard label="已氪体数" value={`${overview.recover_stamina_count}`} />
+            </Box>
+          </Box>
+          <Box>
+            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>资源信息</Text>
+            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={3}>
+              <StatCard label="钻石" value={compactNum(overview.jewel)} />
+              <StatCard label="玛那" value={compactNum(overview.mana)} />
+              <StatCard label="扫荡券" value={compactNum(overview.sweep_ticket)} />
+              <StatCard label="母猪石" value={`${overview.goddess_stone}`} />
+            </Box>
+          </Box>
+          <Box>
+            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>竞技场与战力</Text>
+            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={3}>
+              <StatCard label="JJC币" value={compactNum(overview.arena_coin)} />
+              <StatCard label="PJJC币" value={compactNum(overview.grand_arena_coin)} />
+              <StatCard label="全角色战力" value={compactNum(overview.total_power)} />
+            </Box>
+          </Box>
+          <Box>
+            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>深域等级</Text>
+            <Flex gap={2} wrap="wrap">
+              {parseTalentLevels(overview.talent_level).length > 0
+                ? parseTalentLevels(overview.talent_level).map((item, i) => (
+                  <Box key={i} px={3} py={1.5} bg="bg.subtle" borderRadius="full" borderWidth="1px" borderColor="border.subtle">
+                    <Text fontSize="sm" fontWeight="medium">{item.name}{item.level ? ` ${item.level}` : ''}</Text>
+                  </Box>
+                ))
+                : <Text fontSize="sm" color="fg.muted">暂无同步数据</Text>
+              }
+            </Flex>
+          </Box>
+        </Stack>
       )}
 
       {tab === 'status' && (
@@ -294,6 +330,8 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
                   size="xs"
                   variant={statusFilter === status ? 'solid' : 'outline'}
                   colorPalette={statusFilterColor[status]}
+                  borderRadius="full"
+                  px={3}
                   onClick={() => setStatusFilter(status)}
                 >
                   {statusFilterLabel[status]} {statusCounts[status]}
@@ -311,7 +349,7 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
               <Card.Root key={it.key} bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" borderRadius="lg" minH="118px">
                 <Card.Body display="flex" flexDirection="column" gap={3}>
                   <Flex justify="space-between" align="start" gap={3}>
-                    <Badge colorPalette={statusColor[it.status]}>{it.statusText}</Badge>
+                    <Badge colorPalette={statusColor[it.status]} variant="subtle" borderRadius="full">{it.statusText}</Badge>
                     {it.lastTime && <Text fontSize="xs" color="fg.muted" textAlign="right">{it.lastTime}</Text>}
                   </Flex>
                   <Text fontSize="md" fontWeight="bold" lineHeight="1.25">{it.name}</Text>
@@ -326,7 +364,12 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
       {tab === 'alerts' && (
         <Stack gap={2}>
           {statusItems.filter((x) => x.status === 'failed' || x.status === 'partial').length === 0 && (
-            <Box p={4} bg="bg.subtle" borderRadius="md"><Text color="green.500">暂无异常</Text></Box>
+            <Card.Root bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" borderRadius="xl">
+              <Card.Body textAlign="center" py={10}>
+                <Text fontSize="lg" fontWeight="semibold" color="fg.muted">暂无异常</Text>
+                <Text fontSize="sm" color="fg.muted" mt={1}>所有任务运行正常</Text>
+              </Card.Body>
+            </Card.Root>
           )}
           {statusItems.filter((x) => x.status === 'failed' || x.status === 'partial').map((it) => (
             <Box key={it.key} p={3} borderLeft="4px solid" borderColor={it.status === 'failed' ? 'red.400' : 'yellow.400'} borderRadius="md" bg="bg.subtle">

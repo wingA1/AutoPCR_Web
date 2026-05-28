@@ -69,9 +69,9 @@ function LabeledActionButton({
         <Tooltip content={label}>
             <Button
                 aria-label={label}
-                h="54px"
-                minW="58px"
-                px={2}
+                h="48px"
+                flex="1"
+                px={1}
                 size="sm"
                 variant={variant}
                 colorPalette={colorPalette}
@@ -311,7 +311,7 @@ export function DashBoard() {
     return (
         <Box
             display="grid"
-            gridTemplateColumns={{ base: '1fr', xl: '420px minmax(0, 1fr)' }}
+            gridTemplateColumns={{ base: '1fr', xl: '360px minmax(0, 1fr)' }}
             gap={4}
             h="full"
             w="full"
@@ -319,9 +319,9 @@ export function DashBoard() {
             position="relative"
             zIndex={1}
         >
-        <Stack gap={4} h="full" w="full" minH={0} overflow="hidden">
+        <Stack gap={3} h="full" w="full" minH={0} overflow="auto" bg="bg.panel" borderRadius="2xl" borderWidth="1px" borderColor="border.subtle" p={3}>
             {/* Dashboard Header - Minimalist */}
-            <Card.Root variant="elevated" bg="bg.glass" backdropFilter="blur(12px)" shadow="sm" borderRadius="2xl" borderWidth="1px" borderColor="border.subtle">
+            <Card.Root variant="elevated" bg="bg.muted" shadow="sm" borderRadius="xl" borderWidth="1px" borderColor="border.subtle">
                 <Card.Body py={2} px={4}>
                     <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
                         <Box>
@@ -333,7 +333,7 @@ export function DashBoard() {
                         <HStack gap={2}>
                             <LabeledActionButton label="使用须知" icon={<FiBook />} colorPalette="teal" variant="surface" onClick={showReadme} />
                             <LabeledActionButton label="修改密码" icon={<FiKey />} colorPalette="blue" variant="surface" onClick={handleResetPassword} />
-                            <LabeledActionButton label="注销QQ" icon={<FiUserX />} colorPalette="red" variant="surface" onClick={deleteQQConfirm.onOpen} />
+                            <LabeledActionButton label="注销QQ" icon={<FiUserX />} colorPalette="red" variant="outline" onClick={deleteQQConfirm.onOpen} />
                         </HStack>
                     </Flex>
                 </Card.Body>
@@ -413,7 +413,7 @@ export function DashBoard() {
                     borderRadius="xl"
                     shadow="sm"
                     borderWidth="1px"
-                    borderColor="green.subtle"
+                    borderColor="green.focusRing"
                     align="center"
                     gap={4}
                     animation="fade-in 0.2s"
@@ -561,7 +561,7 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
     return (
         <Card.Root
             key={alias}
-            bg={selected ? 'blue.subtle/15' : 'bg.panel'}
+            bg={selected ? 'blue.subtle/20' : 'bg.muted'}
             shadow={selected ? 'md' : 'sm'}
             borderRadius="2xl"
             borderWidth={selected ? '2px' : '1px'}
@@ -622,7 +622,7 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
             </Card.Body>
 
             <Card.Footer pt={2} onClick={(e) => e.stopPropagation()}>
-                 <HStack gap={1} w="full" justify="space-between">
+                 <HStack gap={2} w="full">
                     <LabeledActionButton label="配置" icon={<FiSettings />} colorPalette="blue" as={Link} // @ts-ignore
                         to={getAccountConfigRoute(alias)} />
                     <LabeledActionButton label="清理" icon={<FiTarget />} colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open} />
