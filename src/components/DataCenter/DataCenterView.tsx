@@ -1,5 +1,5 @@
 ﻿import { useEffect, useMemo, useState } from 'react'
-import { Badge, Box, Button, Card, Flex, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
+import { Badge, Box, Button, Card, Flex, HStack, SimpleGrid, Stack, Tabs, Text } from '@chakra-ui/react'
 import { getAccountDailyResultList, getDCAccountModules, getDCDailyResult, getDCOverview, postDCSummary } from '@api/DataCenter'
 import type { DCOverview } from '@api/DataCenter'
 import { toaster } from '@/components/ui/toaster'
@@ -103,8 +103,8 @@ function getAccountStatusHint(ov: DCOverview | null, statusItems: StatusItem[]):
   const hasPartial = statusItems.some(s => s.status === 'partial')
   if (cleanStatus === 'failed' && !valid) return { type: 'error', text: '清理失败，请检查账号登录状态、验证码或账号配置后重新执行清理。' }
   if (hasTaskFailed && !valid) return { type: 'error', text: '清理失败，请检查账号登录状态、验证码或账号配置后重新执行清理。' }
-  if (cleanStatus === 'failed' && valid) return { type: 'warning', text: '当前账号最近一次清理存在异常，当前展示的数据可能不是最新结果，请查看“任务状态”或“异常预警”。' }
-  if (hasTaskFailed && valid) return { type: 'warning', text: '当前账号最近一次清理存在异常，当前展示的数据可能不是最新结果，请查看“任务状态”或“异常预警”。' }
+  if (cleanStatus === 'failed' && valid) return { type: 'warning', text: '最近一次清理存在异常，数据可能不是最新，请查看“任务状态”或“异常预警”。' }
+  if (hasTaskFailed && valid) return { type: 'warning', text: '最近一次清理存在异常，数据可能不是最新，请查看“任务状态”或“异常预警”。' }
   if (cleanStatus === 'partial' || hasPartial) return { type: 'warning', text: '当前账号部分任务未完成，请查看“任务状态”或“异常预警”。' }
   if (cleanStatus === 'skipped') return { type: 'info', text: '当前账号本次任务已跳过，数据可能不是最新结果。' }
   if (!valid) return { type: 'warning', text: '当前账号尚未完成日常清理，请先点击“执行清理”获取最新数据。' }
@@ -302,19 +302,10 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
           </Tabs.List>
         </Tabs.Root>
         {overview?.daily_clean_time && (
-          <Box
-            flex="1"
-            maxW="380px"
-            px={4}
-            py={2}
-            bg="bg.subtle"
-            borderWidth="1px"
-            borderColor="border.subtle"
-            borderRadius="lg"
-          >
-            <Text fontSize="xs" color="fg.muted">清日常时间</Text>
-            <Text fontSize="sm" fontWeight="bold">{overview.daily_clean_time}</Text>
-          </Box>
+          <HStack gap={1.5} px={2.5} py={1} bg="bg.muted" borderRadius="md" borderWidth="1px" borderColor="border.subtle" flexShrink={0}>
+            <Text fontSize="xs" color="fg.muted">清日常</Text>
+            <Text fontSize="xs" fontWeight="semibold">{overview.daily_clean_time}</Text>
+          </HStack>
         )}
         <Button size="sm" colorPalette="blue" onClick={runClean} loading={cleaning}>执行清理</Button>
       </Flex>
@@ -384,7 +375,7 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
                       { l: '扫荡券', v: compactNum(overview.sweep_ticket) },
                       { l: 'JJC币', v: compactNum(overview.arena_coin) },
                       { l: 'PJJC币', v: compactNum(overview.grand_arena_coin) },
-                      { l: '全角色战力', v: compactNum(overview.total_power) },
+                      { l: '战力', v: compactNum(overview.total_power) },
                     ].map((item, i) => (
                       <Flex key={i} justify="space-between" align="center" py={1} borderBottomWidth={i < 4 ? "1px" : "0"} borderColor="whiteAlpha.50">
                         <Text fontSize="xs" color="fg.muted">{item.l}</Text>
