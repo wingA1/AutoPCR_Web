@@ -326,9 +326,9 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
         const bgMap: Record<string, string> = { warning: 'orange.subtle', error: 'red.subtle', info: 'blue.subtle' }
         const borderMap: Record<string, string> = { warning: 'orange.muted', error: 'red.muted', info: 'blue.muted' }
         return (
-          <Box px={3} py={2} mb={2} bg={bgMap[hint.type]} borderWidth="1px" borderColor={borderMap[hint.type]} borderRadius="lg">
-            <Text fontSize="xs">{hint.text}</Text>
-          </Box>
+          <Flex px={3} py={1.5} mb={2} bg={bgMap[hint.type]} borderWidth="1px" borderColor={borderMap[hint.type]} borderRadius="md" align="center" gap={2}>
+            <Text fontSize="xs" color="fg.muted">{hint.text}</Text>
+          </Flex>
         )
       })()}
 
@@ -386,7 +386,7 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
                       { l: 'PJJC币', v: compactNum(overview.grand_arena_coin) },
                       { l: '全角色战力', v: compactNum(overview.total_power) },
                     ].map((item, i) => (
-                      <Flex key={i} justify="space-between" align="center" py={0.5}>
+                      <Flex key={i} justify="space-between" align="center" py={1} borderBottomWidth={i < 4 ? "1px" : "0"} borderColor="whiteAlpha.50">
                         <Text fontSize="xs" color="fg.muted">{item.l}</Text>
                         <Text fontSize="sm" fontWeight="semibold">{item.v}</Text>
                       </Flex>
