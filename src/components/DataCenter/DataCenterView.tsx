@@ -317,8 +317,8 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
         const bgMap: Record<string, string> = { warning: 'orange.subtle', error: 'red.subtle', info: 'blue.subtle' }
         const borderMap: Record<string, string> = { warning: 'orange.muted', error: 'red.muted', info: 'blue.muted' }
         return (
-          <Flex px={3} py={1.5} mb={2} bg={bgMap[hint.type]} borderWidth="1px" borderColor={borderMap[hint.type]} borderRadius="md" align="center" gap={2}>
-            <Text fontSize="xs" color="fg.muted">{hint.text}</Text>
+          <Flex px={2.5} py={1} mb={1.5} bg={bgMap[hint.type]} borderWidth="1px" borderColor={borderMap[hint.type]} borderRadius="md" align="center" gap={1.5} maxW="fit-content">
+            <Text fontSize="xs" color="fg.muted" lineHeight="1.4">{hint.text}</Text>
           </Flex>
         )
       })()}

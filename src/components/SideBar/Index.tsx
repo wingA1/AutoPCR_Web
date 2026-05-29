@@ -130,11 +130,11 @@ export default function Nav() {
 
     return (
         <Flex flexDirection={'column'} height={'100vh'} bg="bg.canvas">
-            <Box top={0} left={0} right={0} zIndex={20} bg="transparent" px={5} py={1}>
-                <Flex h={14} alignItems={'center'} justifyContent={'space-between'}>
+            <Box top={0} left={0} right={0} zIndex={20} bg="transparent" px={6} py={2}>
+                <Flex h={16} alignItems={'center'} justifyContent={'space-between'}>
                     <Box>
                         <Link to={InfoRoute.to}>
-                            <Image src={autopcr} alt="autopcr" h="28px" w="auto" objectFit="contain" />
+                            <Image src={autopcr} alt="autopcr" h="24px" w="auto" objectFit="contain" />
                         </Link>
                     </Box>
                     <HStack as={'nav'} gap={isSmallScreen ? 1 : 4}>
