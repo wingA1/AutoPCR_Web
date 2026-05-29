@@ -56,10 +56,7 @@ const statusFilterLabel: Record<StatusFilter, string> = {
   ...statusLabel,
 }
 
-const statusFilterColor: Record<StatusFilter, string> = {
-  all: 'blue',
-  ...statusColor,
-}
+
 
 function compactNum(n?: number) {
   if (!n) return '0'
@@ -67,6 +64,53 @@ function compactNum(n?: number) {
   if (n >= 10000) return `${(n / 10000).toFixed(1)}万`
   return n.toLocaleString()
 }
+function displayValue(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '--'
+  return String(value)
+}
+
+function displayRatio(current: unknown, max: unknown): string {
+  if (current == null || max == null) return '--'
+  return `${current}/${max}`
+}
+
+function normalizeCleanStatus(raw: unknown): 'failed' | 'skipped' | 'partial' | 'running' | 'completed' | 'pending' | 'unknown' {
+  if (raw === undefined || raw === null || raw === '') return 'unknown'
+  const s = String(raw).toLowerCase()
+  if (['failed','error','aborted','失败','错误','中止'].includes(s)) return 'failed'
+  if (['skipped','skip','跳过','已跳过'].includes(s)) return 'skipped'
+  if (['partial','partially_completed','部分完成','警告'].includes(s)) return 'partial'
+  if (['running','执行中'].includes(s)) return 'running'
+  if (['completed','success','done','完成','已完成','成功'].includes(s)) return 'completed'
+  if (['pending','not_run','未执行','未清理'].includes(s)) return 'pending'
+  return 'unknown'
+}
+
+function hasValidOverview(ov: DCOverview | null): boolean {
+  if (!ov) return false
+  const numFields = [ov.level, ov.stamina, ov.stamina_max, ov.jewel, ov.mana, ov.sweep_ticket, ov.goddess_stone, ov.arena_coin, ov.grand_arena_coin, ov.total_power]
+  return numFields.some(v => v !== undefined && v !== null) || !!ov.talent_level
+}
+
+function getCleanStatus(ov: DCOverview | null): string {
+  if (!ov) return ''
+  return (ov as any).daily_clean_status ?? (ov as any).clean_status ?? (ov as any).status ?? ''
+}
+function getAccountStatusHint(ov: DCOverview | null, statusItems: StatusItem[]): { type: 'warning' | 'error' | 'info'; text: string } | null {
+  const cleanStatus = normalizeCleanStatus(getCleanStatus(ov))
+  const valid = hasValidOverview(ov)
+  const hasTaskFailed = statusItems.some(s => s.status === 'failed')
+  const hasPartial = statusItems.some(s => s.status === 'partial')
+  if (cleanStatus === 'failed' && !valid) return { type: 'error', text: '清理失败，请检查账号登录状态、验证码或账号配置后重新执行清理。' }
+  if (hasTaskFailed && !valid) return { type: 'error', text: '清理失败，请检查账号登录状态、验证码或账号配置后重新执行清理。' }
+  if (cleanStatus === 'failed' && valid) return { type: 'warning', text: '当前账号最近一次清理存在异常，当前展示的数据可能不是最新结果，请查看“任务状态”或“异常预警”。' }
+  if (hasTaskFailed && valid) return { type: 'warning', text: '当前账号最近一次清理存在异常，当前展示的数据可能不是最新结果，请查看“任务状态”或“异常预警”。' }
+  if (cleanStatus === 'partial' || hasPartial) return { type: 'warning', text: '当前账号部分任务未完成，请查看“任务状态”或“异常预警”。' }
+  if (cleanStatus === 'skipped') return { type: 'info', text: '当前账号本次任务已跳过，数据可能不是最新结果。' }
+  if (!valid) return { type: 'warning', text: '当前账号尚未完成日常清理，请先点击“执行清理”获取最新数据。' }
+  return null
+}
+
 
 function parseTalentLevels(value?: string): { name: string; level: string }[] {
   if (!value) return []
@@ -116,10 +160,10 @@ function toStatusItems(mod: any, dailyResult: any): StatusItem[] {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <Card.Root bg="bg.panel" borderWidth="1px" borderColor="border.subtle" borderRadius="lg" minH="118px">
-      <Card.Body display="flex" justifyContent="space-between" flexDirection="column" gap={3}>
+    <Card.Root bg="whiteAlpha.100" borderWidth="1px" borderColor="whiteAlpha.100" borderRadius="lg" minH="88px">
+      <Card.Body display="flex" justifyContent="space-between" flexDirection="column" gap={1}>
         <Text fontSize="xs" color="fg.muted">{label}</Text>
-        <Text fontSize="2xl" fontWeight="bold" lineHeight="1.25" wordBreak="break-word">{value}</Text>
+        <Text fontSize="xl" fontWeight="bold" lineHeight="1.25" wordBreak="break-word">{value}</Text>
       </Card.Body>
     </Card.Root>
   )
@@ -275,51 +319,86 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
         <Button size="sm" colorPalette="blue" onClick={runClean} loading={cleaning}>执行清理</Button>
       </Flex>
 
-      {tab === 'overview' && overview && (
-        <Stack gap={6}>
-          <Box>
-            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>基础信息</Text>
-            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={3}>
-              <StatCard label="昵称" value={overview.nickname || overview.alias} />
-              <StatCard label="等级" value={`${overview.level}`} />
-              <StatCard label="体力" value={`${overview.stamina}/${overview.stamina_max}`} />
-              <StatCard label="已氪体数" value={`${overview.recover_stamina_count}`} />
-            </Box>
+            
+      {(() => {
+        const hint = getAccountStatusHint(overview, statusItems)
+        if (!hint) return null
+        const bgMap: Record<string, string> = { warning: 'orange.subtle', error: 'red.subtle', info: 'blue.subtle' }
+        const borderMap: Record<string, string> = { warning: 'orange.muted', error: 'red.muted', info: 'blue.muted' }
+        return (
+          <Box px={3} py={2} mb={2} bg={bgMap[hint.type]} borderWidth="1px" borderColor={borderMap[hint.type]} borderRadius="lg">
+            <Text fontSize="xs">{hint.text}</Text>
           </Box>
-          <Box>
-            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>资源信息</Text>
-            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={3}>
-              <StatCard label="钻石" value={compactNum(overview.jewel)} />
-              <StatCard label="玛那" value={compactNum(overview.mana)} />
-              <StatCard label="扫荡券" value={compactNum(overview.sweep_ticket)} />
-              <StatCard label="母猪石" value={`${overview.goddess_stone}`} />
-            </Box>
-          </Box>
-          <Box>
-            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>竞技场与战力</Text>
-            <Box display="grid" gridTemplateColumns="repeat(auto-fit, minmax(180px, 1fr))" gap={3}>
-              <StatCard label="JJC币" value={compactNum(overview.arena_coin)} />
-              <StatCard label="PJJC币" value={compactNum(overview.grand_arena_coin)} />
-              <StatCard label="全角色战力" value={compactNum(overview.total_power)} />
-            </Box>
-          </Box>
-          <Box>
-            <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={3}>深域等级</Text>
-            <Flex gap={2} wrap="wrap">
-              {parseTalentLevels(overview.talent_level).length > 0
-                ? parseTalentLevels(overview.talent_level).map((item, i) => (
-                  <Box key={i} px={3} py={1.5} bg="bg.subtle" borderRadius="full" borderWidth="1px" borderColor="border.subtle">
-                    <Text fontSize="sm" fontWeight="medium">{item.name}{item.level ? ` ${item.level}` : ''}</Text>
-                  </Box>
-                ))
-                : <Text fontSize="sm" color="fg.muted">暂无同步数据</Text>
-              }
-            </Flex>
-          </Box>
-        </Stack>
-      )}
+        )
+      })()}
 
-      {tab === 'status' && (
+{tab === 'overview' && overview && (() => {
+        const talentLevels = parseTalentLevels(overview.talent_level)
+        return (
+          <Box display="grid" gridTemplateColumns={{ base: '1fr', xl: '1fr 1fr' }} gap={4} alignContent="start">
+            <Stack gap={4}>
+              <Card.Root bg="bg.muted" borderWidth="1px" borderColor="whiteAlpha.100" borderRadius="lg">
+                <Card.Body py={3} px={4}>
+                  <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={2}>基础信息</Text>
+                  <Box display="grid" gridTemplateColumns="repeat(2, 1fr)" gap={3}>
+                    <StatCard label="昵称" value={displayValue(overview.nickname || overview.alias)} />
+                    <StatCard label="等级" value={displayValue(overview.level)} />
+                    <StatCard label="体力" value={displayRatio(overview.stamina, overview.stamina_max)} />
+                    <StatCard label="已氪体数" value={displayValue(overview.recover_stamina_count)} />
+                  </Box>
+                </Card.Body>
+              </Card.Root>
+              <Card.Root bg="bg.muted" borderWidth="1px" borderColor="whiteAlpha.100" borderRadius="lg">
+                <Card.Body py={3} px={4}>
+                  <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={2}>深域进度</Text>
+                  <Flex gap={2} wrap="wrap">
+                    {talentLevels.length > 0
+                      ? talentLevels.map((item, i) => (
+                        <Box key={i} px={2.5} py={0.5} bg="bg.muted" borderRadius="md" borderWidth="1px" borderColor="border.subtle">
+                          <Text fontSize="xs" fontWeight="medium">{item.name}{item.level ? ` ${item.level}` : ''}</Text>
+                        </Box>
+                      ))
+                      : <Text fontSize="xs" color="fg.muted">暂无同步数据</Text>
+                    }
+                  </Flex>
+                </Card.Body>
+              </Card.Root>
+            </Stack>
+            <Stack gap={4}>
+              <Card.Root bg="bg.muted" borderWidth="1px" borderColor="whiteAlpha.100" borderRadius="lg">
+                <Card.Body py={3} px={4}>
+                  <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={2}>核心资源</Text>
+                  <Box display="grid" gridTemplateColumns="repeat(3, 1fr)" gap={3}>
+                    <StatCard label="水晶" value={compactNum(overview.jewel)} />
+                    <StatCard label="母猪石" value={displayValue(overview.goddess_stone)} />
+                    <StatCard label="心碎" value={displayValue(overview.heart_fragment)} />
+                  </Box>
+                </Card.Body>
+              </Card.Root>
+              <Card.Root bg="bg.muted" borderWidth="1px" borderColor="whiteAlpha.100" borderRadius="lg">
+                <Card.Body py={2} px={4}>
+                  <Text fontSize="xs" fontWeight="semibold" color="fg.muted" textTransform="uppercase" letterSpacing="wider" mb={1}>存量资源</Text>
+                  <Stack gap={0.5}>
+                    {[
+                      { l: '玛那', v: compactNum(overview.mana) },
+                      { l: '扫荡券', v: compactNum(overview.sweep_ticket) },
+                      { l: 'JJC币', v: compactNum(overview.arena_coin) },
+                      { l: 'PJJC币', v: compactNum(overview.grand_arena_coin) },
+                      { l: '全角色战力', v: compactNum(overview.total_power) },
+                    ].map((item, i) => (
+                      <Flex key={i} justify="space-between" align="center" py={0.5}>
+                        <Text fontSize="xs" color="fg.muted">{item.l}</Text>
+                        <Text fontSize="sm" fontWeight="semibold">{item.v}</Text>
+                      </Flex>
+                    ))}
+                  </Stack>
+                </Card.Body>
+              </Card.Root>
+            </Stack>
+          </Box>
+        )
+      })()}
+{tab === 'status' && (
         <Stack gap={2}>
           {statusItems.length === 0 && <Text color="fg.muted">暂无任务状态</Text>}
           {statusItems.length > 0 && (
@@ -328,8 +407,8 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
                 <Button
                   key={status}
                   size="xs"
-                  variant={statusFilter === status ? 'solid' : 'outline'}
-                  colorPalette={statusFilterColor[status]}
+                  variant={statusFilter === status ? 'solid' : 'ghost'}
+                  colorPalette={statusFilter === status ? 'blue' : 'gray'}
                   borderRadius="full"
                   px={3}
                   onClick={() => setStatusFilter(status)}
@@ -347,7 +426,7 @@ export default function DataCenterView({ selectedAccounts, defaultAccount, onCle
           <SimpleGrid columns={{ base: 1, md: 2, xl: 3 }} gap={3}>
             {filteredStatusItems.map((it) => (
               <Card.Root key={it.key} bg="bg.subtle" borderWidth="1px" borderColor="border.subtle" borderRadius="lg" minH="118px">
-                <Card.Body display="flex" flexDirection="column" gap={3}>
+                <Card.Body display="flex" flexDirection="column" gap={1}>
                   <Flex justify="space-between" align="start" gap={3}>
                     <Badge colorPalette={statusColor[it.status]} variant="subtle" borderRadius="full">{it.statusText}</Badge>
                     {it.lastTime && <Text fontSize="xs" color="fg.muted" textAlign="right">{it.lastTime}</Text>}

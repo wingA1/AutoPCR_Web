@@ -7,12 +7,11 @@ import {
     HStack,
     Input,
     SimpleGrid,
-    Spacer,
     Stack,
     Tag,
     Text,
 } from '@chakra-ui/react';
-import { FiActivity, FiBook, FiCheck, FiCopy, FiKey, FiLayers, FiSettings, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX } from 'react-icons/fi';
+import { FiActivity, FiBook, FiCopy, FiKey, FiSettings, FiTarget, FiUpload, FiUserMinus, FiUserPlus, FiUserX } from 'react-icons/fi';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Radio, RadioGroup } from '../../components/ui/radio';
 import React, { ChangeEvent } from 'react';
@@ -312,127 +311,89 @@ export function DashBoard() {
         <Box
             display="grid"
             gridTemplateColumns={{ base: '1fr', xl: '360px minmax(0, 1fr)' }}
-            gap={4}
+            gap={3}
             h="full"
             w="full"
             minH={0}
             position="relative"
             zIndex={1}
         >
-        <Stack gap={3} h="full" w="full" minH={0} overflow="auto" bg="bg.panel" borderRadius="2xl" borderWidth="1px" borderColor="border.subtle" p={3}>
-            {/* Dashboard Header - Minimalist */}
-            <Card.Root variant="elevated" bg="bg.muted" shadow="sm" borderRadius="xl" borderWidth="1px" borderColor="border.subtle">
+        <Stack gap={2} h="full" w="full" minH={0} bg="bg.panel" borderRadius="2xl" borderWidth="1px" borderColor="border.subtle" p={2} overflow="hidden">
+                        {/* User Info & Actions */}
+                        <Card.Root variant="elevated" bg="bg.muted" shadow="sm" borderRadius="xl" borderWidth="1px" borderColor="border.subtle" flexShrink={0}>
                 <Card.Body py={2} px={4}>
-                    <Flex justify="space-between" align="center" wrap="wrap" gap={2}>
-                        <Box>
-                            <Text fontSize="md" fontWeight="bold">
-                                {!userInfo ? <Skeleton height="20px" width="100px" /> : `欢迎回来, ${userInfo.qq}`}
-                            </Text>
-                        </Box>
-
-                        <HStack gap={2}>
-                            <LabeledActionButton label="使用须知" icon={<FiBook />} colorPalette="teal" variant="surface" onClick={showReadme} />
-                            <LabeledActionButton label="修改密码" icon={<FiKey />} colorPalette="blue" variant="surface" onClick={handleResetPassword} />
-                            <LabeledActionButton label="注销QQ" icon={<FiUserX />} colorPalette="red" variant="outline" onClick={deleteQQConfirm.onOpen} />
-                        </HStack>
-                    </Flex>
+                    <Text fontSize="md" fontWeight="bold">
+                        {!userInfo ? <Skeleton height="20px" width="100px" /> : `欢迎回来, ${userInfo.qq}`}
+                    </Text>
                 </Card.Body>
             </Card.Root>
+
+            <Stack gap={2} flexShrink={0}>
+                <Text fontSize="xs" color="fg.muted" fontWeight="semibold" textTransform="uppercase" letterSpacing="wider">用户</Text>
+                <SimpleGrid columns={2} gap={2}>
+                    <LabeledActionButton label="使用须知" icon={<FiBook />} colorPalette="gray" variant="ghost" onClick={showReadme} />
+                    <LabeledActionButton label="修改密码" icon={<FiKey />} colorPalette="gray" variant="ghost" onClick={handleResetPassword} />
+                </SimpleGrid>
+            </Stack>
+
+            <Stack gap={2} flexShrink={0}>
+                <Text fontSize="xs" color="fg.muted" fontWeight="semibold" textTransform="uppercase" letterSpacing="wider">账号管理</Text>
+                <SimpleGrid columns={2} gap={2}>
+                    {userInfo?.clan && (
+                        <Box gridColumn="span 2">
+                            <LabeledActionButton label="导入账号" icon={<FiUpload />} colorPalette="gray" variant="ghost" onClick={() => fileInputRef.current?.click()} />
+                        </Box>
+                    )}
+                    <LabeledActionButton label="清理全部" icon={<FiTarget />} colorPalette="gray" variant="ghost" onClick={handleCleanDailyAll} loading={count != 0} />
+                    <LabeledActionButton label="创建账号" icon={<FiUserPlus />} colorPalette="green" variant="solid" onClick={() => creatAccountSwitch.onToggle()} />
+                </SimpleGrid>
+            </Stack>
+
+            <Stack gap={2} flexShrink={0}>
+                <Text fontSize="xs" color="fg.muted" fontWeight="semibold" textTransform="uppercase" letterSpacing="wider">危险操作</Text>
+                <SimpleGrid columns={2} gap={2}>
+                    <LabeledActionButton label="删除全部" icon={<FiUserMinus />} colorPalette="red" variant="outline" onClick={clearAccountConfirm.onOpen} />
+                    <LabeledActionButton label="注销QQ" icon={<FiUserX />} colorPalette="red" variant="outline" onClick={deleteQQConfirm.onOpen} />
+                </SimpleGrid>
+            </Stack>
 
             <Alert leastDestructiveRef={cancelRef} isOpen={deleteQQConfirm.open} onClose={deleteQQConfirm.onClose} title="删除QQ" body={`确定删除QQ${userInfo?.qq}吗？`} onConfirm={handleDeleteAccount}>
                 {' '}
             </Alert>
+            <Alert leastDestructiveRef={cancelRef} isOpen={clearAccountConfirm.open} onClose={clearAccountConfirm.onClose} title="删除所有账号" body={`确定删除所有账号吗？`} onConfirm={handleClearAccounts}>
+                {' '}
+            </Alert>
 
-            {/* Action Toolbar */}
-            <Flex
-                bg="bg.panel"
-                p={2}
-                borderRadius="xl"
-                shadow="sm"
-                borderWidth="1px"
-                borderColor="border.subtle"
-                align="center"
-                wrap="wrap"
-                gap={2}
-            >
-                {/* Left Actions: Batch Operations */}
-                <HStack gap={2}>
-                    <LabeledActionButton label="清理全部" icon={<FiTarget />} colorPalette="orange" onClick={handleCleanDailyAll} loading={count != 0} />
-                    <LabeledActionButton
-                        label="批量运行"
-                        icon={<FiLayers />}
-                        colorPalette="blue"
-                        as={Link}
-                        // @ts-ignore
-                        to={getAccountConfigRoute('BATCH_RUNNER')}
-                        loading={count != 0}
-                    />
-                </HStack>
+            <Input
+                ref={fileInputRef}
+                type="file"
+                accept=".json,.tsv"
+                onChange={handleAccountImport}
+                onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
+                display="none"
+            />
 
-                <Spacer />
-
-                {/* Right Actions: Account Manage */}
-                <HStack gap={2}>
-                    {/* Add / Import / Delete Group */}
-                    <HStack gap={1}>
-                        {userInfo?.clan && (
-                            <LabeledActionButton label="导入账号" icon={<FiUpload />} colorPalette="teal" variant="outline" onClick={() => fileInputRef.current?.click()} />
-                        )}
-                        <Input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".tsv"
-                            onChange={handleAccountImport}
-                            onClick={(e) => { (e.target as HTMLInputElement).value = ''; }}
-                            display="none"
-                        />
-                        <LabeledActionButton label="删除全部" icon={<FiUserMinus />} colorPalette="red" variant="outline" onClick={clearAccountConfirm.onOpen} />
-                        <Box position="relative">
-                            <LabeledActionButton
-                                label={creatAccountSwitch.open ? '确认创建' : '创建账号'}
-                                icon={creatAccountSwitch.open ? <FiCheck /> : <FiUserPlus />}
-                                colorPalette={creatAccountSwitch.open ? 'red' : 'green'}
-                                variant="solid"
-                                loading={creatingAccount}
-                                onClick={() => {
-                                    if (creatAccountSwitch.open && !alias) creatAccountSwitch.onToggle();
-                                    else if (creatAccountSwitch.open && alias) handleCreateAccount();
-                                    else creatAccountSwitch.onToggle();
-                                }}
-                            />
-                        </Box>
-                    </HStack>
-                </HStack>
-            </Flex>
-
-            {/* Inline Account Creation Input */}
             {creatAccountSwitch.open && (
                 <Flex
-                    bg="bg.panel"
-                    p={4}
-                    borderRadius="xl"
-                    shadow="sm"
+                    bg="bg.muted"
+                    p={3}
+                    borderRadius="lg"
                     borderWidth="1px"
-                    borderColor="green.focusRing"
+                    borderColor="green.subtle"
                     align="center"
-                    gap={4}
-                    animation="fade-in 0.2s"
+                    gap={3}
                 >
-                    <Text fontWeight="bold" whiteSpace="nowrap">新账号名称:</Text>
                     <Input
                         autoFocus
-                        placeholder="请输入游戏账号昵称..."
+                        size="sm"
+                        placeholder="输入游戏账号昵称..."
                         value={alias}
                         onChange={(e) => setAlias(e.target.value)}
                         onKeyDown={(e) => { if(e.key === 'Enter') handleCreateAccount() }}
                     />
-                    <Button size="sm" colorPalette="green" loading={creatingAccount} onClick={handleCreateAccount}>创建</Button>
+                    <Button size="sm" colorPalette="green" loading={creatingAccount} onClick={handleCreateAccount} flexShrink={0}>创建</Button>
                 </Flex>
             )}
-
-            <Alert leastDestructiveRef={cancelRef} isOpen={clearAccountConfirm.open} onClose={clearAccountConfirm.onClose} title="删除所有账号" body={`确定删除所有账号吗？`} onConfirm={handleClearAccounts}>
-                {' '}
-            </Alert>
 
             <RadioGroup
                 onValueChange={(e) => {
@@ -442,11 +403,17 @@ export function DashBoard() {
                 }}
                 value={userInfo?.default_account}
                 flex={1}
-                overflow={'auto'}
+                minH={0}
+                overflowY={'auto'}
                 p={1}
+                css={{
+                    '&::-webkit-scrollbar': { width: '4px' },
+                    '&::-webkit-scrollbar-track': { background: 'transparent' },
+                    '&::-webkit-scrollbar-thumb': { background: 'rgba(255,255,255,0.1)', borderRadius: '2px' },
+                }}
             >
                 <Stack>
-                    <SimpleGrid gap={4} templateColumns="repeat(auto-fill, minmax(280px, 1fr))">
+                    <SimpleGrid gap={3} templateColumns="1fr">
                         {!userInfo ? (
                             Array.from({ length: 4 }).map((_, i) => (
                                 <Card.Root key={i} bg="bg.panel" borderRadius="2xl" shadow="sm">
@@ -589,46 +556,47 @@ function AccountInfo({ account, onToggle, increaseCount, decreaseCount, updateAc
                         size="xs"
                         variant="ghost"
                         colorPalette="gray"
+                        opacity={0.4}
                         aria-label="Delete"
                         onClick={(e) => {
                             e.stopPropagation();
                             deleteConfirm.onOpen();
                         }}
-                        _hover={{ bg: "red.subtle", color: "red.fg" }}
+                        _hover={{ bg: "red.subtle", color: "red.fg", opacity: 1 }}
+                        transition="opacity 0.2s"
                     >
                         <CloseButton />
                     </IconButton>
                 </Flex>
             </Card.Header>
 
-            <Card.Body py={2}>
-                <Stack gap={3} mt={2}>
-                    <Box bg="bg.subtle" p={2} borderRadius="lg">
-                         <Flex justify="space-between" align="center" mb={1}>
-                            <Text fontSize="xs" color="fg.muted">上次运行</Text>
-                            <Text fontSize="xs" fontWeight="bold">{account.daily_clean_time.time}</Text>
-                        </Flex>
-                        <Flex justify="space-between" align="center">
-                            <Text fontSize="xs" color="fg.muted">状态</Text>
-                             <Tag.Root
-                                size="sm"
-                                colorPalette={account.daily_clean_time.status === '成功' ? "green" : account.daily_clean_time.status === '警告' ? "orange" : "red"}
-                            >
-                                <Tag.Label>{account.daily_clean_time.status}</Tag.Label>
-                            </Tag.Root>
-                        </Flex>
-                    </Box>
+            <Card.Body py={1.5}>
+                <Stack gap={0.5} mt={0.5}>
+                    <Flex justify="space-between" align="center">
+                        <Text fontSize="xs" color="fg.muted">上次运行</Text>
+                        <Text fontSize="xs" fontWeight="semibold">{account.daily_clean_time.time}</Text>
+                    </Flex>
+                    <Flex justify="space-between" align="center">
+                        <Text fontSize="xs" color="fg.muted">状态</Text>
+                        <Tag.Root
+                            size="sm"
+                            variant="subtle"
+                            colorPalette={account.daily_clean_time.status === '成功' ? "green" : account.daily_clean_time.status === '警告' ? "orange" : "red"}
+                        >
+                            <Tag.Label>{account.daily_clean_time.status}</Tag.Label>
+                        </Tag.Root>
+                    </Flex>
                 </Stack>
             </Card.Body>
 
-            <Card.Footer pt={2} onClick={(e) => e.stopPropagation()}>
-                 <HStack gap={2} w="full">
-                    <LabeledActionButton label="配置" icon={<FiSettings />} colorPalette="blue" as={Link} // @ts-ignore
+            <Card.Footer pt={1} pb={2} px={3} onClick={(e) => e.stopPropagation()}>
+                <SimpleGrid columns={2} gap={1.5} w="full">
+                    <LabeledActionButton label="配置" icon={<FiSettings />} colorPalette="gray" variant="surface" as={Link} // @ts-ignore
                         to={getAccountConfigRoute(alias)} />
-                    <LabeledActionButton label="清理" icon={<FiTarget />} colorPalette="orange" onClick={handleCleanDaily} loading={buttomLoading.open} />
-                    <LabeledActionButton label="同步" icon={<FiCopy />} colorPalette="teal" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open} />
-                    <LabeledActionButton label="结果" icon={<FiActivity />} colorPalette="green" onClick={handleDailyResult} loading={buttomLoading.open} />
-                </HStack>
+                    <LabeledActionButton label="清理" icon={<FiTarget />} colorPalette="gray" variant="surface" onClick={handleCleanDaily} loading={buttomLoading.open} />
+                    <LabeledActionButton label="同步" icon={<FiCopy />} colorPalette="gray" variant="surface" onClick={() => onOpenSyncConfig && onOpenSyncConfig(alias)} loading={buttomLoading.open} />
+                    <LabeledActionButton label="结果" icon={<FiActivity />} colorPalette="gray" variant="surface" onClick={handleDailyResult} loading={buttomLoading.open} />
+                </SimpleGrid>
             </Card.Footer>
         </Card.Root>
     );
